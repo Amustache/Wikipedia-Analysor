@@ -125,7 +125,7 @@ def show_query(data):
     if data is not None:
         return json.dumps(data, indent=2, ensure_ascii=False), {'display': 'inline'}
     else:
-        return None, {'display': 'inline'}
+        return None, {'display': 'none'}
 
 @callback(
     Output("download", "data"),
