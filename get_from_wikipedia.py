@@ -3,12 +3,8 @@ from urllib.parse import urlparse, unquote, quote
 from pprint import pprint
 import datetime
 import json
-from collections import Counter
 
 from textstat import textstat
-
-from readability import stats, flesch, flesch_kincaid, automated_readability_index, smog_grade, coleman_liau_index, \
-    gunning_fog_index
 
 # URLs
 URL_INFOS = "https://{lang}.wikipedia.org/w/api.php"
