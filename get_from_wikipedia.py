@@ -99,13 +99,14 @@ def links_to_find(target_links, target_langs=None):
             to_find["*"].add(link)
 
     # Each name without a lang will be tracked down using target langs
-    for name in to_find["*"]:
-        for lang in target_langs:
-            if lang not in to_find:
-                to_find[lang] = set()
-            to_find[lang].add(name)
+    if "*" in to_find:
+        for name in to_find["*"]:
+            for lang in target_langs:
+                if lang not in to_find:
+                    to_find[lang] = set()
+                to_find[lang].add(name)
 
-    del to_find["*"]
+        del to_find["*"]
 
     if VERBOSE:
         pprint(to_find)
@@ -572,7 +573,7 @@ def fetch_text_and_stats(queries):
     return queries
 
 
-def get_from_wikipedia(target_links, target_langs=None, target_contributors=None):
+def get_from_wikipedia(target_links: list, target_langs=None, target_contributors=None):
     if target_langs is None:
         target_langs = DEFAULT_LANGS
 
