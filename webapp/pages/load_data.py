@@ -1,3 +1,4 @@
+import base64
 import csv
 import json
 
@@ -25,14 +26,32 @@ layout = dbc.Container([
             placeholder="https://fr.wikipedia.org/wiki/École_polytechnique_fédérale_de_Lausanne\nen.wikipedia.org/wiki/Jean-Pierre_Hubaux\nMichael Grätzel",
         ),
         dbc.Button("Submit", id="submit_text", color="primary"),
-        # dbc.Spinner(id="spinner", color="primary"),
     ]),
 
     html.Hr(),
 
     # File input
     html.H3("Or, upload a file"),
-    html.Img(src="https://media.tenor.com/hTEZeqwOPWgAAAAd/crumb-cat.gif", width=128),
+    dcc.Upload(
+        id='input_file',
+        children=html.Div([
+            'Drag and Drop or ',
+            html.A('Select Files')
+        ]),
+        style={
+            'width': '100%',
+            'height': '60px',
+            'lineHeight': '60px',
+            'borderWidth': '1px',
+            'borderStyle': 'dashed',
+            'borderRadius': '5px',
+            'textAlign': 'center',
+            'margin': '10px'
+        },
+        # Allow multiple files to be uploaded
+        multiple=False,
+    ),
+    html.Div(id='output-data-upload'),
 
     html.Hr(),
 
@@ -44,10 +63,10 @@ layout = dbc.Container([
                   placeholder="https://docs.google.com/spreadsheets/d/ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefgh/edit",
                   type="text"),
         dbc.Button("Submit", id="submit_gsheet", color="primary"),
-        # dbc.Spinner(id="spinner", color="primary"),
     ]),
 
     # Result
+    html.Center(dbc.Spinner(html.Div(id="spinner"), id="spinner-out", color="primary")),
     html.Div(
         [
             html.Hr(),
@@ -67,36 +86,46 @@ layout = dbc.Container([
     ),
 ])
 
-
 @callback(
     Output("data", "data"),
-    [Input("submit_text", "n_clicks"), Input("input_text", "value")],
+    Output("spinner", "children"),
+    Input("submit_text", "n_clicks"),
+    Input("input_text", "value"),
 )
 def process_text(n, value):
     if n is not None:
-        print(value)
         target_links = value.split("\n")
         queries = get_from_wikipedia(target_links)
         print("Done with processing text")
-        return queries
-
-
-# @callback(
-#     Output("data", "data", allow_duplicate=True),
-#     [Input("submit_file", "n_clicks"), Input("input_file", "value")],
-#     prevent_initial_call="initial_duplicate",
-# )
-# def process_file(n, value):
-#     if n is not None:
-#         target_links = value.split("\n")
-#         queries = get_from_wikipedia(target_links)
-#
-#         return queries
+        return queries, "Done with processing text"
+    else:
+        return None, None
 
 
 @callback(
     Output("data", "data", allow_duplicate=True),
-    [Input("submit_gsheet", "n_clicks"), Input("input_gsheet", "value")],
+    Output("spinner", "children", allow_duplicate=True),
+    Input('input_file', 'contents'),
+    State('input_file', 'filename'),
+    State('input_file', 'last_modified'),
+    prevent_initial_call="initial_duplicate",
+)
+def process_file(content, name, date):
+    if content is not None:
+        content_type, content_string = content.split(',')
+        target_links = base64.b64decode(content_string).decode().replace('\r', '').split("\n")
+        queries = get_from_wikipedia(target_links)
+        print("Done with processing file")
+        return queries, "Done with processing file"
+    else:
+        return None, None
+
+
+@callback(
+    Output("data", "data", allow_duplicate=True),
+    Output("spinner", "children", allow_duplicate=True),
+    Input("submit_gsheet", "n_clicks"),
+    Input("input_gsheet", "value"),
     prevent_initial_call="initial_duplicate",
 )
 def process_gsheet(n, value):
@@ -105,7 +134,7 @@ def process_gsheet(n, value):
 
         res = requests.get(url=csv_url)
         if res.status_code != 200:
-            return None
+            return None, None
         else:
             res.encoding = res.apparent_encoding  # So that we get properly encoded results
             target_links = [link[0] for link in csv.reader(res.text.strip().split('\n'))]
@@ -113,7 +142,9 @@ def process_gsheet(n, value):
 
         queries = get_from_wikipedia(target_links)
         print("Done with processing gsheet")
-        return queries
+        return queries, "Done with processing gsheet"
+    else:
+        return None, None
 
 
 @callback(
@@ -126,6 +157,7 @@ def show_query(data):
         return json.dumps(data, indent=2, ensure_ascii=False), {'display': 'inline'}
     else:
         return None, {'display': 'none'}
+
 
 @callback(
     Output("download", "data"),
