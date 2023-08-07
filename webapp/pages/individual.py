@@ -1,13 +1,17 @@
 from datetime import datetime
 import json
 
-import pandas as pd
-import dash
-from dash import Dash, html, dcc, Output, Input, State, dash_table, callback
-import dash_bootstrap_components as dbc
-from plotly import graph_objects as go, express as px
 
-from webapp.helpers import LANGS, get_color, sizeof_fmt, map_score, humantime_fmt
+from dash import callback, Dash, dash_table, dcc, html, Input, Output, State
+from plotly import express as px
+from plotly import graph_objects as go
+import dash
+import dash_bootstrap_components as dbc
+import pandas as pd
+
+
+from webapp.helpers import get_color, humantime_fmt, LANGS, map_score, sizeof_fmt
+
 
 dash.register_page(__name__)
 
@@ -37,7 +41,6 @@ layout = dbc.Container(
                 ),
             ]
         ),
-
         # Graph
         dbc.Row(
             dbc.Col(
@@ -52,7 +55,6 @@ layout = dbc.Container(
                 ]
             ),
         ),
-
         # By language
         html.H2(
             "Detail per language",
@@ -62,6 +64,7 @@ layout = dbc.Container(
     ],
     fluid="xl",
 )
+
 
 @callback(
     Output("person", "options"),
@@ -113,17 +116,23 @@ def update_by_lang(selected_person, selected_langs, data):
         # Infos card
         name = cur_data[lang]["name"]
         link = f"https://{lang}.wikipedia.org/wiki/{name.replace(' ', '_')}"
-        creation_user = cur_data[lang]['creation']['user']
+        creation_user = cur_data[lang]["creation"]["user"]
         creation_user_link = f"https://{lang}.wikipedia.org/wiki/User:{creation_user}"
 
         readability = [
             html.H5("Readability"),
             html.Dt("Stats"),
-            html.Dd([
-                cur_data[lang]["stats"]["num_words"], " words, ",
-                cur_data[lang]["stats"]["num_sentences"], " sentences, ",
-                "takes ", humantime_fmt(cur_data[lang]["stats"]["reading_time"]), " to read."
-            ]),
+            html.Dd(
+                [
+                    cur_data[lang]["stats"]["num_words"],
+                    " words, ",
+                    cur_data[lang]["stats"]["num_sentences"],
+                    " sentences, ",
+                    "takes ",
+                    humantime_fmt(cur_data[lang]["stats"]["reading_time"]),
+                    " to read.",
+                ]
+            ),
         ]
         for obj in cur_data[lang]["readability"].values():
             readability.append(html.Dt(html.A(obj["name"], href=obj["link"], target="_blank")))
@@ -135,10 +144,14 @@ def update_by_lang(selected_person, selected_langs, data):
             else:
                 colour = "warning"
             hint = f"{'Lower' if obj['min'] > obj['max'] else 'Higher'} value means the article is easier to read (from {obj['min']} to {obj['max']})."
-            readability.append(html.Dd([
-                hint,
-                dbc.Progress(label=obj["result"], value=percent, color=colour),
-            ]))
+            readability.append(
+                html.Dd(
+                    [
+                        hint,
+                        dbc.Progress(label=obj["result"], value=percent, color=colour),
+                    ]
+                )
+            )
 
         card = dbc.Card(
             [
@@ -150,17 +163,23 @@ def update_by_lang(selected_person, selected_langs, data):
                         html.Dl(
                             [
                                 html.Dt("Page creation"),
-                                html.Dd(html.P([datetime.fromisoformat(
-                                    cur_data[lang]['creation']['timestamp'].replace('Z', '+00:00')).strftime(
-                                    '%Y-%m-%d %H:%M'), ", by ",
-                                                html.A(creation_user, href=creation_user_link, target='_blank')]), ),
-
+                                html.Dd(
+                                    html.P(
+                                        [
+                                            datetime.fromisoformat(
+                                                cur_data[lang]["creation"]["timestamp"].replace("Z", "+00:00")
+                                            ).strftime("%Y-%m-%d %H:%M"),
+                                            ", by ",
+                                            html.A(creation_user, href=creation_user_link, target="_blank"),
+                                        ]
+                                    ),
+                                ),
                                 html.Dt("Unique (named) contributors"),
                                 html.Dd(len(set(cur_data[lang]["contributors"]))),
-
                                 html.Dt("Unique (internal) backlinks"),
                                 html.Dd(len(set(cur_data[lang]["backlinks"]))),
-                            ] + readability,
+                            ]
+                            + readability,
                         ),
                     ]
                 ),
@@ -177,8 +196,9 @@ def update_by_lang(selected_person, selected_langs, data):
             for d in data:
                 d.update(
                     {
-                        "timestamp": datetime.fromisoformat(d["timestamp"].replace('Z', '+00:00')).strftime(
-                            "%Y-%m-%d %H:%M"),
+                        "timestamp": datetime.fromisoformat(d["timestamp"].replace("Z", "+00:00")).strftime(
+                            "%Y-%m-%d %H:%M"
+                        ),
                         "change": sizeof_fmt(d["size"] - prev_size if prev_size else 0, sign=True),
                     }
                 )
@@ -214,14 +234,12 @@ def update_by_lang(selected_person, selected_langs, data):
                             id=f"table-{lang}",
                             data=data,
                             columns=columns,
-                            sort_action='native',
-                            filter_action='native',
+                            sort_action="native",
+                            filter_action="native",
                             page_size=10,
                             style_cell_conditional=[
-                                {'if': {'column_id': 'timestamp'},
-                                 'width': '40%'},
-                                {'if': {'column_id': 'username'},
-                                 'width': '40%'},
+                                {"if": {"column_id": "timestamp"}, "width": "40%"},
+                                {"if": {"column_id": "username"}, "width": "40%"},
                             ],
                         ),
                     ],
@@ -241,7 +259,7 @@ def update_by_lang(selected_person, selected_langs, data):
                     width=9,
                     children=table,
                 ),
-            ]
+            ],
         )
         by_langs.append(row_lang)
 
@@ -260,7 +278,7 @@ def update_graph(selected_person, selected_langs, data):
     Update the graph with one or multiple languages.
     """
     if "error" in data[selected_person]:
-        return go.Figure(), {'display': 'none'}
+        return go.Figure(), {"display": "none"}
 
     cur_data = data[selected_person]["langs"]
 
@@ -272,7 +290,7 @@ def update_graph(selected_person, selected_langs, data):
         pageviews_en = cur_data[lang]["pageviews"]["items"]  # "timestamp", "views"
         df = pd.read_json(json.dumps(pageviews_en))
 
-        fig_line = px.line(df, x='timestamp', y='views')
+        fig_line = px.line(df, x="timestamp", y="views")
         fig_line.update_traces(line_color=get_color(lang))
 
         figs.append(fig_line)
@@ -280,7 +298,7 @@ def update_graph(selected_person, selected_langs, data):
         figs = iter(figs)
         figs_data = next(figs).data
     except StopIteration:  # There is no data
-        return go.Figure(), {'display': 'none'}
+        return go.Figure(), {"display": "none"}
 
     for fig in figs:
         figs_data += fig.data
@@ -295,14 +313,16 @@ def update_graph(selected_person, selected_langs, data):
     fig_main.update_xaxes(
         rangeslider_visible=True,
         rangeselector=dict(
-            buttons=list([
-                dict(count=1, label="1m", step="month", stepmode="backward"),
-                dict(count=6, label="6m", step="month", stepmode="backward"),
-                dict(count=1, label="YTD", step="year", stepmode="todate"),
-                dict(count=1, label="1y", step="year", stepmode="backward"),
-                dict(step="all")
-            ])
-        )
+            buttons=list(
+                [
+                    dict(count=1, label="1m", step="month", stepmode="backward"),
+                    dict(count=6, label="6m", step="month", stepmode="backward"),
+                    dict(count=1, label="YTD", step="year", stepmode="todate"),
+                    dict(count=1, label="1y", step="year", stepmode="backward"),
+                    dict(step="all"),
+                ]
+            )
+        ),
     )
 
-    return fig_main, {'display': 'inline'}
+    return fig_main, {"display": "inline"}
