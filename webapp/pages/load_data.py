@@ -77,9 +77,9 @@ layout = dbc.Container([
                 placeholder="{}",
             ),
             html.Center([
-                html.A(dbc.Button("Dashboard", size="lg", className="me-1"), href="dashboard"),
-                html.A(dbc.Button("Individual results", size="lg", className="me-1"), href="individual"),
-                dbc.Button("Download result", id="queries-dl", size="lg", className="me-1"),
+                html.A(dbc.Button("Global dashboard", size="lg", className="me-1"), href="dashboard"),
+                html.A(dbc.Button("Article dashboard", size="lg", className="me-1"), href="individual"),
+                dbc.Button("Download resulting query", id="queries-dl", size="lg", className="me-1"),
             ]),
         ],
         id="queries",
