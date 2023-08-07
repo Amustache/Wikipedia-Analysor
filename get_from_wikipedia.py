@@ -82,6 +82,9 @@ def links_to_find(target_links, target_langs=None):
 
     to_find = {}
     for link in target_links:
+        if link == "":
+            continue
+        link = link.replace("\"", "").replace("\'", "").replace(",", "")  # If copypasta from Python
         # If it's a link, extract lang and name
         if "wikipedia.org" in link:
             lang, name = extract_lang_name(link)
