@@ -590,7 +590,7 @@ def fetch_text_and_stats(queries):
     return queries
 
 
-def get_from_wikipedia(target_links: list, target_langs=None, target_contributors=None):
+def get_from_wikipedia(target_links, target_langs=None, target_contributors=None):
     if target_langs is None:
         target_langs = DEFAULT_LANGS
 
