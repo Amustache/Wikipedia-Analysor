@@ -10,8 +10,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 
 
-from webapp.helpers import get_color, humantime_fmt, LANGS, map_score, sizeof_fmt
-
+from webapp.helpers import get_color, humantime_fmt, LANGS, map_score, sizeof_fmt, create_main_fig
 
 dash.register_page(__name__)
 
@@ -313,19 +312,4 @@ def update_graph(selected_person, selected_langs, data):
         for contrib in contributions:
             fig_main.add_vline(x=contrib["timestamp"], line_dash="dash", line_color=get_color(lang))
 
-    fig_main.update_xaxes(
-        rangeslider_visible=True,
-        rangeselector=dict(
-            buttons=list(
-                [
-                    dict(count=1, label="1m", step="month", stepmode="backward"),
-                    dict(count=6, label="6m", step="month", stepmode="backward"),
-                    dict(count=1, label="YTD", step="year", stepmode="todate"),
-                    dict(count=1, label="1y", step="year", stepmode="backward"),
-                    dict(step="all"),
-                ]
-            )
-        ),
-    )
-
-    return fig_main, {"display": "inline"}
+    return create_main_fig(fig_main)
