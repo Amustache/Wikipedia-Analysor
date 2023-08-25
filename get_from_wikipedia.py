@@ -299,7 +299,10 @@ def fetch_pageprops_revisions(queries):
                 pid = next(iter(content))
                 page["pid"] = int(pid)
                 content = content[pid]
-                page["pwikidata"] = content["pageprops"]["wikibase_item"]
+                if "pageprops" in content and "wikibase_item" in content["pageprops"]:
+                    page["pwikidata"] = content["pageprops"]["wikibase_item"]
+                else:
+                    page["pwikidata"] = None
                 page["creation"] = {
                     "timestamp": content["revisions"][0]["timestamp"],
                     "user": content["revisions"][0]["user"],
