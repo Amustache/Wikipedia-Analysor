@@ -17,6 +17,8 @@ dash.register_page(__name__)
 
 layout = dbc.Container(
     [
+        html.H2("", id="page_title"),
+
         # Dropdowns (person & lang)
         dbc.Row(
             [
@@ -45,7 +47,7 @@ layout = dbc.Container(
         dbc.Row(
             dbc.Col(
                 [
-                    html.H2(
+                    html.H3(
                         "Number of page views by language",
                         style={"margin-bottom": "1em"},
                     ),
@@ -56,7 +58,7 @@ layout = dbc.Container(
             ),
         ),
         # By language
-        html.H2(
+        html.H3(
             "Detail per language",
             style={"margin-bottom": "1em"},
         ),
@@ -80,6 +82,7 @@ def load_data(data):
 @callback(
     Output("langs", "options"),
     Output("langs", "value"),
+    Output("page_title", "children"),
     Input("person", "value"),
     State("data", "data"),
 )
@@ -87,10 +90,10 @@ def change_person(person, data):
     cur_data = data[person]
 
     if "error" in cur_data:
-        return [], ""
+        return [], "", f"Error with {person}"
     langs = list(cur_data["langs"])
 
-    return langs, langs[0]
+    return langs, langs[0], person
 
 
 @callback(
