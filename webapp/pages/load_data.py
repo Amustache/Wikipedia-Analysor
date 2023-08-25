@@ -141,7 +141,6 @@ def process_gsheet(n, value):
         else:
             res.encoding = res.apparent_encoding  # So that we get properly encoded results
             target_links = [link[0] for link in csv.reader(res.text.strip().split("\n"))]
-            print(target_links)
 
         queries = get_from_wikipedia(target_links)
         print("Done with processing gsheet")

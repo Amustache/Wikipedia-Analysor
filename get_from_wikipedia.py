@@ -34,7 +34,7 @@ ACCESS = "all-access"
 AGENTS = "all-agents"
 GRANULARITY = "daily"
 
-VERBOSE = True
+VERBOSE = False
 
 DEFAULT_LANGS = ["en", "fr", "de"]
 TARGET_DURATION = DEFAULT_DURATION
