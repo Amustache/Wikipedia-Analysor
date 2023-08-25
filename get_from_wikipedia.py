@@ -473,6 +473,7 @@ def fetch_pageviews(queries):
                         "items": [],
                     }
 
+                total_views = 0
                 for item in data["items"]:
                     page["pageviews"]["items"].append(
                         {
@@ -480,6 +481,8 @@ def fetch_pageviews(queries):
                             "views": item["views"],
                         }
                     )
+                    total_views += item["views"]
+                page["pageviews_total"] = total_views
             else:
                 obj["error"] = "could not retrieve information (pageviews)"
                 continue
