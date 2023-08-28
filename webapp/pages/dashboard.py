@@ -19,6 +19,7 @@ layout = dbc.Container([
     dbc.Row([
         html.H3("Top 5 pages"),
         html.P("According to their number of page views."),
+        html.Ul([], id="top-names"),
         dbc.Col([
             dcc.Dropdown(
                 id="top-langs",
@@ -33,21 +34,22 @@ layout = dbc.Container([
         ]),
     ]),
 
-    dbc.Row([
-        html.H3("Total page views"),
-        html.P("All the pages, all the languages."),
-        dbc.Col([
-            dcc.Graph(
-                id="total-graph"
-            )
-        ]),
-    ]),
+    # dbc.Row([
+    #     html.H3("Total page views"),
+    #     html.P("All the pages, all the languages."),
+    #     dbc.Col([
+    #         dcc.Graph(
+    #             id="total-graph"
+    #         )
+    #     ]),
+    # ]),
 ])
 
 
 @callback(
     Output("top-graph", "figure"),
     Output("top-graph", "style"),
+    # Output("top-names", "children"),
     Input("top-langs", "value"),
     State("data", "data")
 )
@@ -60,12 +62,10 @@ def update_top5(selected_lang, data):
 
         for lang, obj in content["langs"].items():
             if lang != selected_lang:
-                print("no correct lang")
                 continue
 
             print(f"current: {person}/{lang}")
             if len(tops) < 5:
-                print("adding to top")
                 tops.append({
                     "name": obj["name"],
                     "pageviews_total": obj["pageviews_total"],
@@ -74,7 +74,6 @@ def update_top5(selected_lang, data):
             else:
                 # If last object has less pageview, replace
                 if obj["pageviews_total"] > tops[-1]["pageviews_total"]:
-                    print("adding to top, kicking previous")
                     tops[-1] = {
                         "name": obj["name"],
                         "pageviews_total": obj["pageviews_total"],
@@ -93,11 +92,13 @@ def update_top5(selected_lang, data):
         figs = iter(figs)
         figs_data = next(figs).data
     except StopIteration:  # There is no data
-        return go.Figure(), {"display": "none"}
+        return go.Figure(), {"display": "none"}  #, None
 
     for fig in figs:
         figs_data += fig.data
 
     fig_main = go.Figure(data=figs_data)
 
-    return create_main_fig(fig_main)
+    fig, style = create_main_fig(fig_main)
+
+    return fig, style  #, [html.Li(f"{top['name']}: {top['pageviews_total']} views" for top in tops)]
