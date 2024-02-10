@@ -1,3 +1,4 @@
+import random
 from datetime import datetime
 import io
 import json
@@ -12,7 +13,7 @@ import pandas as pd
 
 
 from get_from_wikipedia import BACKLINKS_LIMIT, CONTRIBS_LIMIT
-from webapp.helpers import create_main_fig, get_color, get_lang_name, humantime_fmt, LANGS, map_score, sizeof_fmt
+from webapp.helpers import create_main_fig, get_color, get_lang_name, humantime_fmt, map_score, sizeof_fmt
 
 
 dash.register_page(__name__)
@@ -117,6 +118,13 @@ def update_by_lang(selected_person, selected_langs, data):
         return []
 
     cur_data = data[selected_person]["langs"]
+    total_langs = len(data[selected_person]["langlinks"])
+    print(total_langs)
+    print(data[selected_person]["langlinks"])
+    select_langs = data[selected_person]["langlinks"]\
+        if total_langs <= 3\
+        else random.choices(data[selected_person]["langlinks"], k=3)
+    select_langs = sorted([get_lang_name(lng, with_native=False) for lng in select_langs])
 
     if not isinstance(selected_langs, list):
         selected_langs = [selected_langs]
@@ -188,7 +196,7 @@ def update_by_lang(selected_person, selected_langs, data):
         len_backlinks = len(set(cur_data[lang]["backlinks"]))
         card = dbc.Card(
             [
-                dbc.CardHeader(f"{lang} - {LANGS[lang]}"),
+                dbc.CardHeader(f"{lang} - {get_lang_name(lang)}"),
                 dbc.CardBody(
                     [
                         html.A(html.H4(name, className="card-title"), href=link, target="_blank"),
@@ -223,6 +231,8 @@ def update_by_lang(selected_person, selected_langs, data):
                                         target="_blank",
                                     )
                                 ),
+                                html.Dt(f"Other languages"),
+                                html.Dd(html.P(f"{', '.join(select_langs)}{', and {} more'.format(total_langs - 3) if total_langs > 3 else ''}")),
                             ]
                             + class_importance
                             + readability,

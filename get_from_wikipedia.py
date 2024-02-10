@@ -171,6 +171,10 @@ def fetch_data(to_find, target_langs=None):
 
             # Add the other target langs
             if "langlinks" in obj:
+                if "langlinks" not in queries[title]:
+                    queries[title]["langlinks"] = []
+                queries[title]["langlinks"] += [o["lang"] for o in obj["langlinks"]] + [lang]
+                queries[title]["langlinks"] = list(set(queries[title]["langlinks"]))
                 for langlink in obj["langlinks"]:
                     if not target_langs or langlink["lang"] in target_langs:  # Use all langs if no target lang
                         queries[title]["langs"][langlink["lang"]] = {"name": langlink["*"]}
