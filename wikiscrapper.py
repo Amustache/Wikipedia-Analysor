@@ -1,7 +1,7 @@
 import datetime
 from dataclasses import dataclass
 from pprint import pprint
-from typing import List, Union
+from typing import List, Union, Set
 from urllib.parse import urlparse, unquote
 
 import requests
@@ -73,13 +73,15 @@ class WikiQuery:
     verbose: bool = False  # PRINT EVERYTHING or don't
 
     def __post_init__(self):
-        if isinstance(self.targets, str):
-            self.targets = self.targets.split()
+        if self.targets is None:
+            self.targets = list()
+        if not isinstance(self.targets, list):
+            self.targets = list(set(self.targets.split()))
 
         if self.target_langs is None:
             self.target_langs = DEFAULT_LANGS
-        if isinstance(self.target_langs, str):
-            self.target_langs = self.target_langs.split()
+        if not isinstance(self.target_langs, list):
+            self.target_langs = list(set(self.target_langs.split()))
 
         # Session
         self.s = get_session()  # Session for requests
@@ -93,14 +95,14 @@ class WikiQuery:
         if isinstance(targets, str):
             targets = targets.split()
 
-        self.targets += targets
+        self.targets += list(set(targets))
         self.find_links(targets)
 
     def add_langs(self, langs: Union[str, List[str]]):
         if isinstance(langs, str):
             langs = langs.split()
 
-        self.target_langs += langs
+        self.target_langs += list(set(langs))
         self.find_links(self.targets)
 
     def find_links(self, targets):
@@ -136,7 +138,7 @@ test = WikiQuery("Bonjour")
 print(test)
 print(test.links_to_find)
 test.add_targets("https://en.wikipedia.org/wiki/H._P._Lovecraft")
-test.add_targets(["Martin Vetterli", "Philippe Moris"])
+test.add_targets(["Martin Vetterli", "Philippe Moris", "Bonjour"])
 print(test)
 print(test.links_to_find)
 test.add_langs("it")
