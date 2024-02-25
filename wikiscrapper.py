@@ -89,23 +89,23 @@ class WikiQuery:
         self.results = {}
 
         self.links_to_find = {}
-        self.find_links(self.targets)
+        self.update_links_to_find(self.targets)
 
     def add_targets(self, targets: Union[str, List[str]]):
         if isinstance(targets, str):
             targets = targets.split()
 
         self.targets += list(set(targets))
-        self.find_links(targets)
+        self.update_links_to_find(targets)
 
     def add_langs(self, langs: Union[str, List[str]]):
         if isinstance(langs, str):
             langs = langs.split()
 
         self.target_langs += list(set(langs))
-        self.find_links(self.targets)
+        self.update_links_to_find(self.targets)
 
-    def find_links(self, targets):
+    def update_links_to_find(self, targets):
         for link in targets:
             if link == "":
                 continue
@@ -133,7 +133,25 @@ class WikiQuery:
         if self.verbose:
             pprint(self.links_to_find)
 
+    def update(self, force=False):
+        # If we want to update all the links
+        if force:
+            self.update_links_to_find(self.targets)
 
+        # If there is nothing to update, return
+        if len(self.links_to_find) == 0:
+            return
+
+        # Local copy of links to find
+        local_links_to_find = self.links_to_find.copy()
+
+        for lang, names in local_links_to_find.items():
+            for name in names:
+                pass
+
+                self.links_to_find[lang].remove(name)  # Found or non-existent
+
+truc = {1,2,3}
 test = WikiQuery("Bonjour")
 print(test)
 print(test.links_to_find)
