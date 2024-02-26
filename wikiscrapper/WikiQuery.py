@@ -20,6 +20,9 @@ class WikiQuery:
     verbose: bool = False  # PRINT EVERYTHING or don't
 
     def __post_init__(self):
+        """
+        Various attribute transformations
+        """
         # Create set for targets
         if self.targets is None:
             self.targets = set()
@@ -98,10 +101,15 @@ class WikiQuery:
         # Local copy of links to find
         local_links_to_find = self.links_to_find.copy()
 
-        for lang, names in local_links_to_find.items():
+        for query_lang, names in local_links_to_find.items():
             for name in names:
-                self.results[name] = WikiPage(name, lang)
+                self.results[name] = {}
 
-                self.links_to_find[lang].remove(name)  # Found or non-existent
-                if len(self.links_to_find[lang]) == 0:  # No more entries
-                    del self.links_to_find[lang]
+                # ...
+
+                self.links_to_find[query_lang].remove(name)  # Found or non-existent
+                if len(self.links_to_find[query_lang]) == 0:  # No more entries
+                    del self.links_to_find[query_lang]
+
+        # We are done
+        self.links_to_find = local_links_to_find
