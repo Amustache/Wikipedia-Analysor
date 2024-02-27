@@ -1,13 +1,16 @@
 # URLs
-from urllib.parse import urlparse, unquote
+from urllib.parse import unquote, urlparse
+
 
 import requests
+
 
 URL_INFOS = "https://{lang}.wikipedia.org/w/api.php"
 URL_STATS = "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/{lang}.wikipedia/{access}/{agent}/{uri_article_name}/{granularity}/{start}/{end}"
 
 # Consts
 WIKI_LIMIT = 500  # From the API
+WIKI_TITLES_LIMIT = 50  # From the API, https://www.mediawiki.org/wiki/API:Query#Additional_notes
 GLOBAL_LIMIT = WIKI_LIMIT
 DEFAULT_DURATION = int(2 * 365.25)  # Number of days for contributions
 DEFAULT_LANGS = {"de", "en", "fr"}

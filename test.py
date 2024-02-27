@@ -16,6 +16,7 @@ def randomword(length):
 TEST_MULTIPLE_PAGES = [
     "https://en.wikipedia.org/wiki/Linked_data",
     "https://fr.wikipedia.org/wiki/%C3%89cole_polytechnique_f%C3%A9d%C3%A9rale_de_Lausanne",
+    "https://en.wikipedia.org/wiki/%C3%89cole_polytechnique_f%C3%A9d%C3%A9rale_de_Lausanne",
     "Voynich manuscript",
     "https://als.wikipedia.org/wiki/Elsass",
     "https://fr.wikipedia.org/wiki/Lisp",
@@ -36,6 +37,7 @@ TEST_EXPECTED_TOTAL = {
     },
     "en": {
         "Linked_data",
+        "École_polytechnique_fédérale_de_Lausanne",
         "Voynich manuscript",
         "Thsi sis ian error lol",
     },
@@ -111,6 +113,13 @@ class TestQuery(unittest.TestCase):
         query.add_langs("en")
         self.assertEqual(len(query.target_langs), 4)
         self.assertEqual(query.target_langs, {"de", "en", "fr", "it"})
+
+    def test_aaa(self):
+        query = WikiQuery()
+        query.add_targets(TEST_MULTIPLE_PAGES)
+        query.add_targets(TEST_ONE_PAGE)
+
+        query.update()
 
 
 if __name__ == "__main__":

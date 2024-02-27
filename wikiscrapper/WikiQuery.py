@@ -1,11 +1,45 @@
 from collections.abc import Iterable
 from dataclasses import dataclass
+from itertools import batched
 from pprint import pprint
 import datetime
+import json
 
 
-from wikiscrapper.helpers import DEFAULT_DURATION, DEFAULT_LANGS, extract_lang_name, get_session, GLOBAL_LIMIT
+from wikiscrapper.helpers import (
+    DEFAULT_DURATION,
+    DEFAULT_LANGS,
+    extract_lang_name,
+    get_session,
+    GLOBAL_LIMIT,
+    URL_INFOS,
+    WIKI_LIMIT,
+    WIKI_TITLES_LIMIT,
+)
 from wikiscrapper.WikiPage import WikiPage
+
+
+def merge_wiki_pages(found):
+    """
+    Merge linked pages with different names.
+
+    We assume here that pages are correctly linked (by Wikipedia) between each other.
+
+    :param found:
+    :return:
+    """
+    results = {}
+    for name, content in found.items():
+        skip = False
+        for langlink in content["langlinks"]:
+            for page in langlink.values():  # Only one
+                if page in results:  # Page with that name already exists
+                    skip = True
+                    break
+
+        if not skip:
+            results[name] = content
+    return results
 
 
 @dataclass
@@ -44,23 +78,23 @@ class WikiQuery:
         self.results = {}
 
         self.links_to_find = {}
-        self.update_links_to_find(self.targets)
+        self._update_links_to_find(self.targets)
 
     def add_targets(self, targets: str | Iterable[str]):
         if isinstance(targets, str):
             targets = targets.split()
 
         self.targets.update(targets)
-        self.update_links_to_find(targets)
+        self._update_links_to_find(targets)
 
     def add_langs(self, langs: str | Iterable[str]):
         if isinstance(langs, str):
             langs = langs.split()
 
         self.target_langs.update(langs)
-        self.update_links_to_find(self.targets)
+        self._update_links_to_find(self.targets)
 
-    def update_links_to_find(self, targets):
+    def _update_links_to_find(self, targets):
         for link in targets:
             if link == "":
                 continue
@@ -92,24 +126,94 @@ class WikiQuery:
     def update(self, force=False):
         # If we want to update all the links
         if force:
-            self.update_links_to_find(self.targets)
+            self._update_links_to_find(self.targets)
 
         # If there is nothing to update, return
         if len(self.links_to_find) == 0:
             return
 
-        # Local copy of links to find
-        local_links_to_find = self.links_to_find.copy()
+        # Try to find each page on Wikipedia
+        found, not_found = self._find_wiki_pages()
 
-        for query_lang, names in local_links_to_find.items():
-            for name in names:
-                self.results[name] = {}
+        # Merge linked pages with different names
+        results = merge_wiki_pages(found)
 
-                # ...
+        # All links are found, prepare for next steps
+        self.results.update(results)
 
-                self.links_to_find[query_lang].remove(name)  # Found or non-existent
-                if len(self.links_to_find[query_lang]) == 0:  # No more entries
-                    del self.links_to_find[query_lang]
+        print(json.dumps(results))
 
-        # We are done
-        self.links_to_find = local_links_to_find
+        #     for query_name in names:
+        #         self.results[query_name] = {}
+        #
+        #         # ...
+        #         # ...
+        #
+        #         self.links_to_find[query_lang].remove(query_name)  # Found or non-existent
+        #         if len(self.links_to_find[query_lang]) == 0:  # No more entries
+        #             del self.links_to_find[query_lang]
+        #
+        # # We are done
+        # self.links_to_find = local_links_to_find
+
+    def _find_wiki_pages(self):
+        """
+        Try to find each page on Wikipedia.
+
+        :return:
+        """
+        found = {}
+        not_found = {}
+
+        for query_lang, names in self.links_to_find.items():
+            # We group the queries per target lang for fewer queries
+            url_full = URL_INFOS.format(lang=query_lang)
+            # Only 50 titles at a time
+            for batch in batched(names, WIKI_TITLES_LIMIT):
+                titles = "|".join(batch)
+                params = {
+                    "titles": titles,
+                    "prop": "langlinks",
+                    "lllimit": WIKI_LIMIT,  # We want all langs in order to find our target langs
+                    "redirects": 1,  # For those perky redirects
+                }
+
+                results = self.s.get(url=url_full, params=params)
+                timestamp = datetime.datetime.now().isoformat()
+                data = results.json()
+
+                if "query" in data and "pages" in data["query"]:
+                    data = data["query"]["pages"]
+                else:
+                    raise AttributeError("Error while querying.")
+
+                for pid, content in data.items():
+                    pageid = int(pid)
+                    title = content["title"]
+
+                    result = {
+                        title: {
+                            "query": {
+                                "lang": query_lang,
+                                "timestamp": timestamp,
+                            }
+                        }
+                    }
+
+                    # Page is not found with that language
+                    if pageid < 0:
+                        result[title]["error"] = "not found"
+                        not_found.update(result)
+                        continue
+
+                    # Page is found
+                    # Add languages
+                    result[title]["langlinks"] = [
+                        {langlink["lang"]: langlink["*"]} for langlink in content["langlinks"]
+                    ]
+                    result[title]["langlinks"].append({query_lang: title})
+
+                    # Will only keep the latest successful result for same name pages
+                    found.update(result)
+
+        return found, not_found

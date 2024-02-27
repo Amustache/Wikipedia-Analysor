@@ -5,13 +5,14 @@ import datetime
 
 @dataclass
 class WikiPage:
+    # Base parameters
     title: str
     lang: str
     pid: int = None  # Set later; negative = error
     description: str = None
 
-    errors: Iterable[str] = None
     last_updated: datetime.datetime = datetime.datetime.today()
+    errors: Iterable[str] = None
 
     def __post_init__(self):
         self.langlinks = None
