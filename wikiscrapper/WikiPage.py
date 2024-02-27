@@ -1,6 +1,6 @@
-import datetime
 from collections.abc import Iterable
 from dataclasses import dataclass
+import datetime
 
 
 @dataclass
@@ -66,12 +66,12 @@ class WikiPage:
             revisions = [revisions]
 
         for revision in revisions:
-            self.revisions.append({
-                "revid": revision["revid"],
-                "parentid": revision["parentid"],
-                "timestamp": revision["timestamp"],
-                "username": revision["user"],
-                "size": revision["size"],
-            })
-
-    def add
+            self.revisions.append(
+                {
+                    "revid": revision["revid"],
+                    "parentid": revision["parentid"],
+                    "timestamp": revision["timestamp"],
+                    "username": revision["user"],
+                    "size": revision["size"],
+                }
+            )

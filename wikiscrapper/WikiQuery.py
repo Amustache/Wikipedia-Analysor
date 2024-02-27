@@ -1,10 +1,11 @@
-import datetime
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pprint import pprint
+import datetime
 
+
+from wikiscrapper.helpers import DEFAULT_DURATION, DEFAULT_LANGS, extract_lang_name, get_session, GLOBAL_LIMIT
 from wikiscrapper.WikiPage import WikiPage
-from wikiscrapper.helpers import DEFAULT_DURATION, GLOBAL_LIMIT, DEFAULT_LANGS, get_session, extract_lang_name
 
 
 @dataclass
@@ -27,9 +28,7 @@ class WikiQuery:
         if self.targets is None:
             self.targets = set()
         if not isinstance(self.targets, set):
-            self.targets = set(
-                self.targets.split() if isinstance(self.targets, str) else self.targets
-            )
+            self.targets = set(self.targets.split() if isinstance(self.targets, str) else self.targets)
 
         # Create set for langs
         if self.target_langs is None:
@@ -77,6 +76,7 @@ class WikiQuery:
                 if "*" not in self.links_to_find:
                     self.links_to_find["*"] = set()
                 self.links_to_find["*"].add(link)
+
         # Each name without a lang will be tracked down using target langs
         if "*" in self.links_to_find:
             for name in self.links_to_find["*"]:
