@@ -139,7 +139,10 @@ class WikiQuery:
         results = merge_wiki_pages(found)
 
         # All links are found, prepare for next steps
-        self.results.update(results)
+        self.results.update({page: None for page in not_found.keys()})
+
+        for name, content in results.items():
+            pass  # Do things
 
         print(json.dumps(results))
 
@@ -215,5 +218,8 @@ class WikiQuery:
 
                     # Will only keep the latest successful result for same name pages
                     found.update(result)
+
+        # Nothing left to find
+        self.links_to_find.clear()
 
         return found, not_found
