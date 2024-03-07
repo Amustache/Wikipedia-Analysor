@@ -25,17 +25,16 @@ def merge_wiki_pages(found):
 
     We assume here that pages are correctly linked (by Wikipedia) between each other.
 
-    :param found:
-    :return:
+    :param found: dict of {name: data}.
+    :return: dict of {name: data}.
     """
     results = {}
     for name, content in found.items():
         skip = False
-        for langlink in content["langlinks"]:
-            for page in langlink.values():  # Only one
-                if page in results:  # Page with that name already exists
-                    skip = True
-                    break
+        for _, pagename in content["langlinks"].items():
+            if pagename in results:  # Page with that name already exists
+                skip = True
+                break
 
         if not skip:
             results[name] = content
@@ -136,15 +135,26 @@ class WikiQuery:
         found, not_found = self._find_wiki_pages()
 
         # Merge linked pages with different names
-        results = merge_wiki_pages(found)
+        merged = merge_wiki_pages(found)
 
         # All links are found, prepare for next steps
         self.results.update({page: None for page in not_found.keys()})
+        self.results.update(
+            {
+                page: {
+                    lang: WikiPage(
+                        title=content["langlinks"][lang],
+                        lang=lang,
+                    )
+                    for lang in self.target_langs
+                    if lang in content["langlinks"]
+                }
+                for page, content in merged.items()
+            }
+        )
 
-        for name, content in results.items():
-            pass  # Do things
-
-        print(json.dumps(results))
+        # print(json.dumps(merged))
+        pprint(self.results)
 
         #     for query_name in names:
         #         self.results[query_name] = {}
@@ -163,7 +173,11 @@ class WikiQuery:
         """
         Try to find each page on Wikipedia.
 
-        :return:
+        `data` contains query language and timestamp.
+        `data` for `found` contains the found pages in different languages
+        `data` for `not_found` contains an error.
+
+        :return: dict of {name: data}, dict of {name: data}.
         """
         found = {}
         not_found = {}
@@ -211,10 +225,8 @@ class WikiQuery:
 
                     # Page is found
                     # Add languages
-                    result[title]["langlinks"] = [
-                        {langlink["lang"]: langlink["*"]} for langlink in content["langlinks"]
-                    ]
-                    result[title]["langlinks"].append({query_lang: title})
+                    result[title]["langlinks"] = {langlink["lang"]: langlink["*"] for langlink in content["langlinks"]}
+                    result[title]["langlinks"].update({query_lang: title})
 
                     # Will only keep the latest successful result for same name pages
                     found.update(result)
