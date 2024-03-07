@@ -14,6 +14,7 @@ from wikiscrapper.helpers import (
     get_session,
     GLOBAL_LIMIT,
     URL_INFOS,
+    Verbose,
     WIKI_LIMIT,
     WIKI_TITLES_LIMIT,
 )
@@ -52,7 +53,7 @@ class WikiQuery:
     granularity: str = "daily"  # Granularity for contributions
     backlinks_limit: int = GLOBAL_LIMIT  # Number of backlinks to retrieve at most
     contributions_limit: int = GLOBAL_LIMIT  # Number of contributions to retrieve at most
-    verbose: bool = False  # PRINT EVERYTHING or don't
+    verbose: bool | int = False  # PRINT EVERYTHING or don't; 0/False = Normal, 1/True = Info, 2 = Debug, 3 = Trace
 
     def __post_init__(self):
         """
@@ -80,10 +81,8 @@ class WikiQuery:
         self.links_to_find = {}
         self._update_links_to_find(self.targets)
 
-        # Fetch functions
-        self.ATTRIBUTES = {
-            "pageassessments": self._fetch_pageassessments,
-        }
+        if self.verbose >= Verbose.TRACE:
+            pprint(">>> Post init is done.")
 
     def _update_links_to_find(self, targets):
         for link in targets:
@@ -111,7 +110,9 @@ class WikiQuery:
                     self.links_to_find[lang].add(name)
 
             del self.links_to_find["*"]
-        if self.verbose:
+
+        if self.verbose >= Verbose.TRACE:
+            pprint(">>> Links to find updated:")
             pprint(self.links_to_find)
 
     def _find_wiki_pages(self):
@@ -164,6 +165,9 @@ class WikiQuery:
 
                     # Page is not found with that language
                     if pageid < 0:
+                        if self.verbose >= Verbose.DEBUG:
+                            pprint(f">> `{query_lang}/{title}` not found.")
+
                         result[title]["error"] = "not found"
                         not_found.update(result)
                         continue
@@ -179,16 +183,33 @@ class WikiQuery:
         # Nothing left to find
         self.links_to_find.clear()
 
+        if self.verbose:
+            pprint(f"> Found {len(found)} links ({len(not_found)} not found)")
+
         return found, not_found
 
     def _fetch_for_all(self, fetch_func):
         for page, langs in self.results.items():
+            if self.verbose >= Verbose.INFO:
+                pprint(f"> Fetching for `{page}`")
+
             if langs is None:
+                if self.verbose >= Verbose.TRACE:
+                    pprint(">>> Nothing to be done")
                 continue
+
             for wikipage in langs.values():
+                if self.verbose >= Verbose.DEBUG:
+                    pprint(f">> For `{wikipage.lang}/{wikipage.title}`")
+
+                if self.verbose >= Verbose.TRACE:
+                    pprint(f">>> Using `{fetch_func.__name__}`")
                 fetch_func(wikipage, self.s)
 
     def _fetch_all(self):
+        if self.verbose:
+            pprint("> Fetching all for all pages")
+
         for fetch_fun in FETCHERS:
             self._fetch_for_all(fetch_fun)
 
@@ -197,6 +218,9 @@ class WikiQuery:
             targets = targets.split()
 
         self.targets.update(targets)
+        if self.verbose >= Verbose.DEBUG:
+            pprint(f">> Added {len(targets)} new targets.")
+
         self._update_links_to_find(targets)
 
     def add_langs(self, langs: str | Iterable[str]):
@@ -204,6 +228,10 @@ class WikiQuery:
             langs = langs.split()
 
         self.target_langs.update(langs)
+
+        if self.verbose >= Verbose.DEBUG:
+            pprint(f">> Added {len(langs)} new langs.")
+
         self._update_links_to_find(self.targets)
 
     def update(self, force=False):

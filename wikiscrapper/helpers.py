@@ -1,4 +1,5 @@
 # URLs
+from enum import IntEnum
 from urllib.parse import unquote, urlparse
 
 
@@ -16,6 +17,14 @@ DEFAULT_DURATION = int(2 * 365.25)  # Number of days for contributions
 DEFAULT_LANGS = {"de", "en", "fr"}
 ACCESS = "all-access"  # From the API
 AGENTS = "all-agents"  # From the API
+
+
+# Verbose
+class Verbose(IntEnum):
+    NORMAL = 0
+    INFO = 1
+    DEBUG = 2
+    TRACE = 3
 
 
 def get_session():

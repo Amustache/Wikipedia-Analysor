@@ -1,9 +1,10 @@
+from pprint import pprint
 import random
 import string
 import unittest
 
 
-from wikiscrapper.helpers import DEFAULT_LANGS
+from wikiscrapper.helpers import DEFAULT_LANGS, Verbose
 from wikiscrapper.WikiPage import WikiPage
 from wikiscrapper.WikiQuery import WikiQuery
 
@@ -114,12 +115,14 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(len(query.target_langs), 4)
         self.assertEqual(query.target_langs, {"de", "en", "fr", "it"})
 
-    def test_aaa(self):
-        query = WikiQuery()
+    def test_verbose(self):
+        query = WikiQuery(verbose=Verbose.TRACE)
         query.add_targets(TEST_MULTIPLE_PAGES)
         query.add_targets(TEST_ONE_PAGE)
 
         query.update()
+
+        pprint(query)
 
 
 if __name__ == "__main__":
