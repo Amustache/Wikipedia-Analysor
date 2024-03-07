@@ -145,7 +145,7 @@ class WikiQuery:
                     lang: WikiPage(
                         title=content["langlinks"][lang],
                         lang=lang,
-                    )
+                    ).add_langs(content["langlinks"])
                     for lang in self.target_langs
                     if lang in content["langlinks"]
                 }

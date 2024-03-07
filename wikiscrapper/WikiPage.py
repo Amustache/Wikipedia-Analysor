@@ -23,6 +23,9 @@ class WikiPage:
     def add_langs(self, langlinks: str | Iterable[str]):
         """
         self.langlinks is a set of language codes
+
+        :param langlinks:
+        :return: self
         """
         if not hasattr(self, "langlinks") or self.langlinks is None:
             self.langlinks = {self.lang}
@@ -32,9 +35,14 @@ class WikiPage:
 
         self.langlinks.update(langlinks)
 
+        return self
+
     def add_backlinks(self, backlinks: str | Iterable[str]):
         """
         self.backlinks is a list of page titles
+
+        :param backlinks:
+        :return: self
         """
         if not hasattr(self, "backlinks") or self.backlinks is None:
             self.backlinks = set()
@@ -44,9 +52,14 @@ class WikiPage:
 
         self.backlinks.update(backlinks)
 
+        return self
+
     def add_contributors(self, contributors: str | Iterable[str]):
         """
         self.contributors is a list of usernames
+
+        :param contributors:
+        :return: self
         """
         if not hasattr(self, "contributors") or self.contributors is None:
             self.contributors = set()
@@ -56,9 +69,14 @@ class WikiPage:
 
         self.contributors.update(contributors)
 
+        return self
+
     def add_revisions(self, revisions):
         """
         self.contributions is a list of revisions (= contributions)
+
+        :param revisions:
+        :return: self
         """
         if not hasattr(self, "revisions") or self.revisions is None:
             self.revisions = list()
@@ -76,3 +94,5 @@ class WikiPage:
                     "size": revision["size"],
                 }
             )
+
+        return self
