@@ -19,6 +19,7 @@ class WikiPage:
         self.backlinks = None
         self.contributors = None
         self.revisions = None
+        self.pageassessments = None
 
     def add_langs(self, langlinks: str | Iterable[str]):
         """
@@ -94,5 +95,19 @@ class WikiPage:
                     "size": revision["size"],
                 }
             )
+
+        return self
+
+    def add_pageassessments(self, pageassessments):
+        """
+        self.pageassessments is a list of page assessments
+
+        :param contributors:
+        :return: self
+        """
+        if not hasattr(self, "pageassessments") or self.pageassessments is None:
+            self.pageassessments = {}
+
+        self.pageassessments.update(pageassessments)
 
         return self

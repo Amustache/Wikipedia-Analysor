@@ -6,6 +6,7 @@ import datetime
 import json
 
 
+from wikiscrapper.fetchers import FETCHERS
 from wikiscrapper.helpers import (
     DEFAULT_DURATION,
     DEFAULT_LANGS,
@@ -79,19 +80,10 @@ class WikiQuery:
         self.links_to_find = {}
         self._update_links_to_find(self.targets)
 
-    def add_targets(self, targets: str | Iterable[str]):
-        if isinstance(targets, str):
-            targets = targets.split()
-
-        self.targets.update(targets)
-        self._update_links_to_find(targets)
-
-    def add_langs(self, langs: str | Iterable[str]):
-        if isinstance(langs, str):
-            langs = langs.split()
-
-        self.target_langs.update(langs)
-        self._update_links_to_find(self.targets)
+        # Fetch functions
+        self.ATTRIBUTES = {
+            "pageassessments": self._fetch_pageassessments,
+        }
 
     def _update_links_to_find(self, targets):
         for link in targets:
@@ -121,53 +113,6 @@ class WikiQuery:
             del self.links_to_find["*"]
         if self.verbose:
             pprint(self.links_to_find)
-
-    def update(self, force=False):
-        # If we want to update all the links
-        if force:
-            self._update_links_to_find(self.targets)
-
-        # If there is nothing to update, return
-        if len(self.links_to_find) == 0:
-            return
-
-        # Try to find each page on Wikipedia
-        found, not_found = self._find_wiki_pages()
-
-        # Merge linked pages with different names
-        merged = merge_wiki_pages(found)
-
-        # All links are found, prepare for next steps
-        self.results.update({page: None for page in not_found.keys()})
-        self.results.update(
-            {
-                page: {
-                    lang: WikiPage(
-                        title=content["langlinks"][lang],
-                        lang=lang,
-                    ).add_langs(content["langlinks"])
-                    for lang in self.target_langs
-                    if lang in content["langlinks"]
-                }
-                for page, content in merged.items()
-            }
-        )
-
-        # print(json.dumps(merged))
-        pprint(self.results)
-
-        #     for query_name in names:
-        #         self.results[query_name] = {}
-        #
-        #         # ...
-        #         # ...
-        #
-        #         self.links_to_find[query_lang].remove(query_name)  # Found or non-existent
-        #         if len(self.links_to_find[query_lang]) == 0:  # No more entries
-        #             del self.links_to_find[query_lang]
-        #
-        # # We are done
-        # self.links_to_find = local_links_to_find
 
     def _find_wiki_pages(self):
         """
@@ -235,3 +180,62 @@ class WikiQuery:
         self.links_to_find.clear()
 
         return found, not_found
+
+    def _fetch_for_all(self, fetch_func):
+        for page, langs in self.results.items():
+            if langs is None:
+                continue
+            for wikipage in langs.values():
+                fetch_func(wikipage, self.s)
+
+    def _fetch_all(self):
+        for fetch_fun in FETCHERS:
+            self._fetch_for_all(fetch_fun)
+
+    def add_targets(self, targets: str | Iterable[str]):
+        if isinstance(targets, str):
+            targets = targets.split()
+
+        self.targets.update(targets)
+        self._update_links_to_find(targets)
+
+    def add_langs(self, langs: str | Iterable[str]):
+        if isinstance(langs, str):
+            langs = langs.split()
+
+        self.target_langs.update(langs)
+        self._update_links_to_find(self.targets)
+
+    def update(self, force=False):
+        # If we want to update all the links
+        if force:
+            self._update_links_to_find(self.targets)
+
+        # If there is nothing to update, return
+        if len(self.links_to_find) == 0:
+            return
+
+        # Try to find each page on Wikipedia
+        found, not_found = self._find_wiki_pages()
+
+        # Merge linked pages with different names
+        merged = merge_wiki_pages(found)
+
+        # All links are found, prepare for next steps
+        self.results.update({page: None for page in not_found.keys()})
+        self.results.update(
+            {
+                page: {
+                    lang: WikiPage(
+                        title=content["langlinks"][lang],
+                        lang=lang,
+                    ).add_langs(content["langlinks"])
+                    for lang in self.target_langs
+                    if lang in content["langlinks"]
+                }
+                for page, content in merged.items()
+            }
+        )
+
+        # Fetch all attributs, for all pages
+        self._fetch_all()
