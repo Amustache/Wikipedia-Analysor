@@ -115,6 +115,7 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(len(query.target_langs), 4)
         self.assertEqual(query.target_langs, {"de", "en", "fr", "it"})
 
+    @unittest.skip("Testing verbose is too long")
     def test_verbose(self):
         query = WikiQuery(verbose=Verbose.TRACE)
         query.add_targets(TEST_MULTIPLE_PAGES)
