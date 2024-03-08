@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from itertools import batched
 from pprint import pprint
 import datetime
-import json
 
 
 from wikiscrapper.fetchers import FETCHERS
