@@ -3,6 +3,9 @@ from dataclasses import dataclass
 import datetime
 
 
+from textstat import textstat
+
+
 @dataclass
 class WikiPage:
     # Base parameters
@@ -23,6 +26,15 @@ class WikiPage:
         self.contributors = None
         self.revisions = None
         self.pageassessments = None
+        self.pwikidata = None
+        self.creation = {
+            "timestamp": None,
+            "user": None,
+        }
+        self.pageviews = None
+        self.extract = None
+        self.stats = None
+        self.readability = None
 
     def add_langs(self, langlinks: str | Iterable[str]):
         """
@@ -114,3 +126,45 @@ class WikiPage:
         self.pageassessments.update(pageassessments)
 
         return self
+
+    def make_text_stats(self):
+        if self.extract is None or self.extract == "":
+            raise AttributeError("No text to work with!")
+
+        self.stats = {
+            "num_words": textstat.lexicon_count(self.extract),
+            "num_sentences": textstat.sentence_count(self.extract),
+            "reading_time": textstat.reading_time(self.extract),
+        }
+
+        # Using textstat
+        # Here, "min" means harder to read, while "max" means easier to read
+        # "minimum readability" vs. "maximum readability"
+        textstat.set_lang(self.lang)
+        self.readability = {
+            "fres": {
+                "name": "Flesch Reading Ease Score",
+                "link": "https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch_reading_ease",
+                "result": textstat.flesch_reading_ease(self.extract),
+                "min": 0,
+                "max": 100,
+            }
+        }
+
+        if self.lang == "it":
+            self.readability["it_gi"] = {
+                "name": "Gulpease Index",
+                "link": "https://it.wikipedia.org/wiki/Indice_Gulpease",
+                "result": textstat.gulpease_index(self.extract),
+                "min": 0,
+                "max": 100,
+            }
+
+        if self.lang == "de":
+            self.readability["de_ws"] = {
+                "name": "Wiener Sachtextformel",
+                "link": "https://de.wikipedia.org/wiki/Lesbarkeitsindex#Wiener_Sachtextformel",
+                "result": textstat.wiener_sachtextformel(self.extract, 1),  # Magic number... What are the variants?
+                "min": 15,
+                "max": 4,
+            }
