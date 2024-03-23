@@ -61,6 +61,8 @@ class WikiQuery:
         # Create set for targets
         if self.targets is None:
             self.targets = set()
+        if isinstance(self.targets, str):
+            self.targets = {self.targets}
         if not isinstance(self.targets, set):
             self.targets = set(self.targets.split() if isinstance(self.targets, str) else self.targets)
 
