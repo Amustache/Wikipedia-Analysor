@@ -64,9 +64,9 @@ class WikiPage:
             self.backlinks = set()
 
         if isinstance(backlinks, str):
-            backlinks = [backlinks]
-
-        self.backlinks.update(backlinks)
+            self.backlinks.add(backlinks)
+        else:
+            self.backlinks.update([backlink["title"] for backlink in backlinks])
 
         return self
 
@@ -81,9 +81,9 @@ class WikiPage:
             self.contributors = set()
 
         if isinstance(contributors, str):
-            contributors = [contributors]
-
-        self.contributors.update(contributors)
+            self.contributors.add(contributors)
+        else:
+            self.contributors.update([contributor["name"] for contributor in contributors])
 
         return self
 

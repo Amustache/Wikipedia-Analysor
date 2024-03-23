@@ -170,9 +170,7 @@ def fetch_revisions(wikipage, session):
         "prop": "revisions",
         "rvprop": "ids|timestamp|user|size",
         "rvstart": wikipage.creation["timestamp"],
-        "rvend": (
-            datetime.datetime.fromisoformat(wikipage.last_updated) - datetime.timedelta(days=DEFAULT_DURATION)
-        ).isoformat(),
+        "rvend": (wikipage.last_updated - datetime.timedelta(days=DEFAULT_DURATION)).isoformat(),
         "rvdir": "older",  # rvstart has to be later than rvend with that mode
         "rvlimit": GLOBAL_LIMIT,
     }
@@ -200,6 +198,7 @@ def fetch_revisions(wikipage, session):
 
 
 def fetch_pageviews(wikipage, session):
+    return
     raise NotImplementedError
 
 
