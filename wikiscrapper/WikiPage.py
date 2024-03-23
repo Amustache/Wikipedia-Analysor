@@ -98,6 +98,7 @@ class WikiPage:
 
         return self
 
+
     def add_pageassessments(self, pageassessments):
         """
         self.pageassessments is a list of page assessments

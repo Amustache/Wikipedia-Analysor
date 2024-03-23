@@ -125,6 +125,19 @@ class TestQuery(unittest.TestCase):
 
         pprint(query)
 
+class TestPage(unittest.TestCase):
+    def test_simple_page(self):
+        query = WikiQuery(TEST_ONE_PAGE)
+        query.update()
+
+        pprint(next(iter(query.results.values())))
+
+    def test_page_error(self):
+        query = WikiQuery("Nah mate this page does not exist")
+        query.update()
+
+        self.assertIsNone(next(iter(query.results.values())))
+
 
 if __name__ == "__main__":
     unittest.main()
