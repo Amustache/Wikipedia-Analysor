@@ -15,6 +15,9 @@ class WikiPage:
     errors: Iterable[str] = None
 
     def __post_init__(self):
+        if self.errors is None:
+            self.errors = list()
+
         self.langlinks = None
         self.backlinks = None
         self.contributors = None
@@ -97,7 +100,6 @@ class WikiPage:
             )
 
         return self
-
 
     def add_pageassessments(self, pageassessments):
         """

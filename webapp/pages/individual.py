@@ -1,7 +1,7 @@
-import random
 from datetime import datetime
 import io
 import json
+import random
 
 
 from dash import callback, Dash, dash_table, dcc, html, Input, Output, State
@@ -121,9 +121,11 @@ def update_by_lang(selected_person, selected_langs, data):
     total_langs = len(data[selected_person]["langlinks"])
     print(total_langs)
     print(data[selected_person]["langlinks"])
-    select_langs = data[selected_person]["langlinks"]\
-        if total_langs <= 3\
+    select_langs = (
+        data[selected_person]["langlinks"]
+        if total_langs <= 3
         else random.choices(data[selected_person]["langlinks"], k=3)
+    )
     select_langs = sorted([get_lang_name(lng, with_native=False) for lng in select_langs])
 
     if not isinstance(selected_langs, list):
@@ -232,7 +234,11 @@ def update_by_lang(selected_person, selected_langs, data):
                                     )
                                 ),
                                 html.Dt(f"Other languages"),
-                                html.Dd(html.P(f"{', '.join(select_langs)}{', and {} more'.format(total_langs - 3) if total_langs > 3 else ''}")),
+                                html.Dd(
+                                    html.P(
+                                        f"{', '.join(select_langs)}{', and {} more'.format(total_langs - 3) if total_langs > 3 else ''}"
+                                    )
+                                ),
                             ]
                             + class_importance
                             + readability,

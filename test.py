@@ -125,6 +125,7 @@ class TestQuery(unittest.TestCase):
 
         pprint(query)
 
+
 class TestPage(unittest.TestCase):
     def test_simple_page(self):
         query = WikiQuery(TEST_ONE_PAGE)

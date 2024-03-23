@@ -1,6 +1,7 @@
 # URLs
 from enum import IntEnum
-from urllib.parse import unquote, urlparse, quote
+from urllib.parse import quote, unquote, urlparse
+
 
 import requests
 
@@ -59,6 +60,7 @@ def extract_lang_name(link: str) -> tuple[str, str]:
     lang = parsed.hostname.split(".")[0]
     name = parsed.path.split("/")[-1]
     return lang, unquote(name)
+
 
 def wiki_quote(page_name):
     """

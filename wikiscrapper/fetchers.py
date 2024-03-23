@@ -1,4 +1,4 @@
-from wikiscrapper.helpers import URL_INFOS, wiki_quote
+from wikiscrapper.helpers import GLOBAL_LIMIT, URL_INFOS, wiki_quote
 
 
 def fetch_base_info(wikipage, session):
@@ -49,7 +49,46 @@ def fetch_pageassessments(wikipage, session):
         wikipage.add_pageassessments(data["query"]["pages"][pid]["pageassessments"])
 
 
+def fetch_backlinks(wikipage, session):
+    """
+    Fetcher for `backlinks`.
+    """
+    pid = str(wikipage.pid)
+
+    blcontinue = ""
+    blcounter = 0
+    url_full = URL_INFOS.format(lang=wikipage.lang)
+
+    while blcounter < GLOBAL_LIMIT:
+        params = {
+            "list": "backlinks",
+            "bltitle": wikipage.title,
+            "bllimit": GLOBAL_LIMIT,
+        }
+        if blcontinue != "":
+            params["blcontinue"] = blcontinue
+
+        results = session.get(url=url_full, params=params)
+        data = results.json()
+
+        if "query" in data and "backlinks" in data["query"]:
+            bldata = data["query"]["backlinks"]
+        else:
+            wikipage.errors.append("Could not retrieve information (backlinks)")
+            break
+
+        if bldata:
+            wikipage.add_backlinks(bldata)
+            blcounter += len(bldata)
+
+        if "continue" in data:
+            blcontinue = data["continue"]["blcontinue"]
+        else:
+            break
+
+
 FETCHERS = [
     fetch_base_info,
+    fetch_backlinks,
     fetch_pageassessments,
 ]
