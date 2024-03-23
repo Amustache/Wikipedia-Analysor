@@ -1,7 +1,10 @@
-from wikiscrapper.helpers import URL_INFOS
+from wikiscrapper.helpers import URL_INFOS, wiki_quote
 
 
-def fetch_info(wikipage, session):
+def fetch_base_info(wikipage, session):
+    """
+    Fetcher for `pid`, `description`.
+    """
     url_full = URL_INFOS.format(lang=wikipage.lang)
     params = {
         "titles": wikipage.title,
@@ -17,8 +20,20 @@ def fetch_info(wikipage, session):
         if wikipage.pid < 0:
             raise AttributeError("PID should not be negative.")
 
+    # Get the short description
+    data = session.get(
+        url=f"https://{wikipage.lang}.wikipedia.org/api/rest_v1/page/summary/{wiki_quote(wikipage.title)}?redirect=true"
+    ).json()
+    if "description" in data:
+        wikipage.description = data["description"]
+    else:
+        wikipage.description = "(no description found)"
+
 
 def fetch_pageassessments(wikipage, session):
+    """
+    Fetcher for `pageassessments`.
+    """
     pid = str(wikipage.pid)
 
     url_full = URL_INFOS.format(lang=wikipage.lang)
@@ -35,6 +50,6 @@ def fetch_pageassessments(wikipage, session):
 
 
 FETCHERS = [
-    fetch_info,
+    fetch_base_info,
     fetch_pageassessments,
 ]
