@@ -6,6 +6,9 @@ import datetime
 from textstat import textstat
 
 
+from wikiscrapper.helpers import ACCESS, AGENTS, GRANULARITY
+
+
 @dataclass
 class WikiPage:
     # Base parameters
@@ -32,6 +35,7 @@ class WikiPage:
             "user": None,
         }
         self.pageviews = None
+        self.pageviews_total = None
         self.extract = None
         self.stats = None
         self.readability = None
@@ -124,6 +128,34 @@ class WikiPage:
             self.pageassessments = {}
 
         self.pageassessments.update(pageassessments)
+
+        return self
+
+    def add_pageviews(self, pageviews):
+        """
+        self.contributions is a list of pageviews
+
+        :param pageviews:
+        :return: self
+        """
+        if not hasattr(self, "pageviews") or self.pageviews is None:
+            self.pageviews = {
+                "granularity": GRANULARITY,
+                "access": ACCESS,
+                "agent": AGENTS,
+                "items": list(),
+            }
+        if not hasattr(self, "pageviews_total") or self.pageviews_total is None:
+            self.pageviews_total = 0
+
+        for item in pageviews:
+            self.pageviews["items"].append(
+                {
+                    "timestamp": datetime.datetime.strptime(item["timestamp"], "%Y%m%d%H").isoformat(),
+                    "views": item["views"],
+                }
+            )
+            self.pageviews_total += item["views"]
 
         return self
 

@@ -17,6 +17,7 @@ DEFAULT_DURATION = int(2 * 365.25)  # Number of days for contributions
 DEFAULT_LANGS = {"de", "en", "fr"}
 ACCESS = "all-access"  # From the API
 AGENTS = "all-agents"  # From the API
+GRANULARITY = "daily"  # From the API
 
 
 # Verbose

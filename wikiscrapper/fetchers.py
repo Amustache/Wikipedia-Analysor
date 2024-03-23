@@ -1,7 +1,16 @@
 import datetime
 
 
-from wikiscrapper.helpers import DEFAULT_DURATION, GLOBAL_LIMIT, URL_INFOS, wiki_quote
+from wikiscrapper.helpers import (
+    ACCESS,
+    AGENTS,
+    DEFAULT_DURATION,
+    GLOBAL_LIMIT,
+    GRANULARITY,
+    URL_INFOS,
+    URL_STATS,
+    wiki_quote,
+)
 
 
 def fetch_base_info(wikipage, session):
@@ -198,8 +207,26 @@ def fetch_revisions(wikipage, session):
 
 
 def fetch_pageviews(wikipage, session):
-    return
-    raise NotImplementedError
+    """
+    Fetcher for `pageviews`.
+    """
+    url_full = URL_STATS.format(
+        lang=wikipage.lang,
+        access=ACCESS,
+        agent=AGENTS,
+        uri_article_name=wiki_quote(wikipage.title),
+        granularity=GRANULARITY,
+        start=(wikipage.last_updated - datetime.timedelta(days=DEFAULT_DURATION)).strftime("%Y%m%d00"),
+        end=wikipage.last_updated.strftime("%Y%m%d00"),
+    )
+
+    results = session.get(url=url_full)
+    data = results.json()
+
+    if "items" in data:
+        wikipage.add_pageviews(data["items"])
+    else:
+        wikipage.errors.append("Could not retrieve information (pageviews)")
 
 
 def fetch_text(wikipage, session):
