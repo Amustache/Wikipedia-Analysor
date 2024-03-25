@@ -131,7 +131,14 @@ class TestPage(unittest.TestCase):
         query = WikiQuery(TEST_ONE_PAGE)
         query.update()
 
-        pprint(next(iter(query.results.values())))
+        # Check each found page
+        for _, page in next(iter(query.results.values())).items():
+            # No error
+            self.assertListEqual(page.errors, [])
+
+            # All attributes should be full
+            for attribute, content in page.__dict__.items():
+                self.assertIsNotNone(content, msg=f"{page.lang}/{page.title}: {attribute}")
 
     def test_page_error(self):
         query = WikiQuery("Nah mate this page does not exist")
