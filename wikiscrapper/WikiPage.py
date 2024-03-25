@@ -117,7 +117,7 @@ class WikiPage:
 
         return self
 
-    def add_pageassessments(self, pageassessments):
+    def add_pageassessments(self, pageassessments=None):
         """
         self.pageassessments is a list of page assessments
 
@@ -127,7 +127,8 @@ class WikiPage:
         if not hasattr(self, "pageassessments") or self.pageassessments is None:
             self.pageassessments = {}
 
-        self.pageassessments.update(pageassessments)
+        if pageassessments:
+            self.pageassessments.update(pageassessments)
 
         return self
 

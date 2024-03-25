@@ -59,6 +59,8 @@ def fetch_pageassessments(wikipage, session):
 
     if "query" in data and "pages" in data["query"] and "pageassessments" in data["query"]["pages"][pid]:
         wikipage.add_pageassessments(data["query"]["pages"][pid]["pageassessments"])
+    else:
+        wikipage.add_pageassessments()
 
 
 def fetch_backlinks(wikipage, session):
