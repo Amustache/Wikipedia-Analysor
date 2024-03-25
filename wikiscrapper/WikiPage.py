@@ -1,6 +1,7 @@
 from collections.abc import Iterable
 from dataclasses import dataclass
 import datetime
+import json
 
 
 from textstat import textstat
@@ -201,3 +202,27 @@ class WikiPage:
                 "min": 15,
                 "max": 4,
             }
+
+    def export_json(self, file=None):
+        def default_export(obj):
+            if isinstance(obj, datetime.datetime):
+                return obj.isoformat()
+            elif isinstance(obj, set):
+                return list(obj)
+            else:
+                return "???"
+
+        if file:
+            with open(file, "w") as f:
+                json.dump(
+                    self.__dict__,
+                    f,
+                    indent=2,
+                    default=default_export,
+                )
+        else:
+            return json.dumps(
+                self.__dict__,
+                indent=2,
+                default=default_export,
+            )

@@ -146,6 +146,13 @@ class TestPage(unittest.TestCase):
 
         self.assertIsNone(next(iter(query.results.values())))
 
+    def test_export_json(self):
+        query = WikiQuery(TEST_ONE_PAGE)
+        query.update()
+
+        for _, page in next(iter(query.results.values())).items():
+            page.export_json()
+
 
 if __name__ == "__main__":
     unittest.main()
