@@ -122,7 +122,7 @@ def fetch_more_infos(wikipage, session):
         else:
             wikipage.pwikidata = -1
 
-        wikipage.creation["timestamp"] = content["revisions"][0]["timestamp"]
+        wikipage.creation["timestamp"] = datetime.datetime.fromisoformat(content["revisions"][0]["timestamp"])
         wikipage.creation["user"] = content["revisions"][0]["user"]
     else:
         wikipage.error.append("Could not retrieve information (props)")
@@ -178,7 +178,7 @@ def fetch_revisions(wikipage, session):
         "titles": wikipage.title,
         "prop": "revisions",
         "rvprop": "ids|timestamp|user|size",
-        "rvstart": wikipage.creation["timestamp"],
+        "rvstart": wikipage.last_updated.isoformat(),
         "rvend": (wikipage.last_updated - datetime.timedelta(days=DEFAULT_DURATION)).isoformat(),
         "rvdir": "older",  # rvstart has to be later than rvend with that mode
         "rvlimit": GLOBAL_LIMIT,
