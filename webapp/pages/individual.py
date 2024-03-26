@@ -97,6 +97,9 @@ def load_data(data):
 def change_person(person, data):
     cur_data = data[person]
 
+    if cur_data is None:
+        return [], "", f"Error with {person}"
+
     langs = list(cur_data.keys())
 
     return langs, langs[0], person
@@ -113,6 +116,9 @@ def update_by_lang(selected_person, selected_langs, data):
     Add a row to contain language details, such as contributions, for each language selected.
     """
     cur_data = data[selected_person]
+
+    if cur_data is None:
+        return []
 
     if not isinstance(selected_langs, list):
         selected_langs = [selected_langs]
@@ -343,6 +349,9 @@ def update_graph(selected_person, selected_langs, data):
     Update the graph with one or multiple languages.
     """
     cur_data = data[selected_person]
+
+    if cur_data is None:
+        return go.Figure(), {"display": "none"}
 
     if not isinstance(selected_langs, list):
         selected_langs = [selected_langs]
