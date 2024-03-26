@@ -9,7 +9,7 @@ import dash_bootstrap_components as dbc
 import requests
 
 
-from get_from_wikipedia import get_from_wikipedia
+from wikiscrapper.WikiQuery import WikiQuery
 
 
 dash.register_page(__name__, path="/")
@@ -98,9 +98,9 @@ layout = dbc.Container(
 def process_text(n, value):
     if n is not None:
         target_links = value.split("\n")
-        queries = get_from_wikipedia(target_links)
+        query = WikiQuery(target_links).update()
         print("Done with processing text")
-        return queries, "Done with processing text"
+        return query.export_json(), "Done with processing text"
     else:
         return None, None
 
@@ -117,9 +117,9 @@ def process_file(content, name, date):
     if content is not None:
         content_type, content_string = content.split(",")
         target_links = base64.b64decode(content_string).decode().replace("\r", "").split("\n")
-        queries = get_from_wikipedia(target_links)
+        query = WikiQuery(target_links).update()
         print("Done with processing file")
-        return queries, "Done with processing file"
+        return query.export_json(), "Done with processing file"
     else:
         return None, None
 
@@ -142,9 +142,9 @@ def process_gsheet(n, value):
             res.encoding = res.apparent_encoding  # So that we get properly encoded results
             target_links = [link[0] for link in csv.reader(res.text.strip().split("\n"))]
 
-        queries = get_from_wikipedia(target_links)
+        query = WikiQuery(target_links).update()
         print("Done with processing gsheet")
-        return queries, "Done with processing gsheet"
+        return query.export_json(), "Done with processing gsheet"
     else:
         return None, None
 
