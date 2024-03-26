@@ -125,6 +125,12 @@ class TestQuery(unittest.TestCase):
 
         pprint(query)
 
+    def test_export_json(self):
+        query = WikiQuery(TEST_ONE_PAGE)
+        query.update()
+
+        query.export_json()
+
 
 class TestPage(unittest.TestCase):
     def test_simple_page(self):
