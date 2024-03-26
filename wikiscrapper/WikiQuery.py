@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from itertools import batched
 from pprint import pprint
 import datetime
+import json
 
 
 from wikiscrapper.fetchers import FETCHERS
@@ -64,7 +65,7 @@ class WikiQuery:
         if isinstance(self.targets, str):
             self.targets = {self.targets}
         if not isinstance(self.targets, set):
-            self.targets = set(self.targets.split() if isinstance(self.targets, str) else self.targets)
+            self.targets = set(self.targets)
 
         # Create set for langs
         if self.target_langs is None:
@@ -84,6 +85,8 @@ class WikiQuery:
 
         if self.verbose >= Verbose.TRACE:
             pprint(">>> Post init is done.")
+
+        return self
 
     def _update_links_to_find(self, targets):
         for link in targets:
@@ -224,6 +227,8 @@ class WikiQuery:
 
         self._update_links_to_find(targets)
 
+        return self
+
     def add_langs(self, langs: str | Iterable[str]):
         if isinstance(langs, str):
             langs = langs.split()
@@ -234,6 +239,8 @@ class WikiQuery:
             pprint(f">> Added {len(langs)} new langs.")
 
         self._update_links_to_find(self.targets)
+
+        return self
 
     def update(self, force=False):
         # If we want to update all the links
@@ -268,3 +275,25 @@ class WikiQuery:
 
         # Fetch all attributs, for all pages
         self._fetch_all()
+
+        return self
+
+    def export_json(self, file=None):
+        def default_export(obj):
+            if isinstance(obj, WikiPage):
+                return obj.export_json()
+            else:
+                return "???"
+
+        res = json.loads(json.dumps(self.results, default=default_export))
+
+        if file:
+            with open(file, "w") as f:
+                json.dump(
+                    res,
+                    f,
+                    indent=2,
+                    default=default_export,
+                )
+        else:
+            return res

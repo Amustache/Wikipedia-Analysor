@@ -212,17 +212,15 @@ class WikiPage:
             else:
                 return "???"
 
+        res = json.loads(json.dumps(self.__dict__, default=default_export))
+
         if file:
             with open(file, "w") as f:
                 json.dump(
-                    self.__dict__,
+                    res,
                     f,
                     indent=2,
                     default=default_export,
                 )
         else:
-            return json.dumps(
-                self.__dict__,
-                indent=2,
-                default=default_export,
-            )
+            return res
