@@ -14,6 +14,9 @@ from wikiscrapper.WikiQuery import WikiQuery
 
 dash.register_page(__name__, path="/")
 
+with open("example_input", "r") as f:
+    placeholder = f.read()
+
 layout = dbc.Container(
     [
         html.H2("Input your Wikipedia pages"),
@@ -26,7 +29,7 @@ layout = dbc.Container(
                 dbc.Textarea(
                     id="input_text",
                     className="mb-3",
-                    placeholder="https://fr.wikipedia.org/wiki/École_polytechnique_fédérale_de_Lausanne\nen.wikipedia.org/wiki/Jean-Pierre_Hubaux\nMichael Grätzel",
+                    placeholder=placeholder,
                 ),
                 dbc.Button("Submit", id="submit_text", color="primary"),
             ]
