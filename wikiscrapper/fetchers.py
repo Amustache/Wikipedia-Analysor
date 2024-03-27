@@ -1,4 +1,5 @@
 import datetime
+import inspect
 
 
 from wikiscrapper.helpers import (
@@ -41,6 +42,9 @@ def fetch_base_info(wikipage, session):
     else:
         wikipage.description = "(no description found)"
 
+    # Done
+    return wikipage.lang, wikipage.title, inspect.stack()[0][3]
+
 
 def fetch_pageassessments(wikipage, session):
     """
@@ -61,6 +65,9 @@ def fetch_pageassessments(wikipage, session):
         wikipage.add_pageassessments(data["query"]["pages"][pid]["pageassessments"])
     else:
         wikipage.add_pageassessments()
+
+    # Done
+    return wikipage.lang, wikipage.title, inspect.stack()[0][3]
 
 
 def fetch_backlinks(wikipage, session):
@@ -98,6 +105,9 @@ def fetch_backlinks(wikipage, session):
         else:
             break
 
+    # Done
+    return wikipage.lang, wikipage.title, inspect.stack()[0][3]
+
 
 def fetch_more_infos(wikipage, session):
     """
@@ -128,6 +138,9 @@ def fetch_more_infos(wikipage, session):
         wikipage.creation["user"] = content["revisions"][0]["user"]
     else:
         wikipage.error.append("Could not retrieve information (props)")
+
+    # Done
+    return wikipage.lang, wikipage.title, inspect.stack()[0][3]
 
 
 def fetch_contributors(wikipage, session):
@@ -166,6 +179,9 @@ def fetch_contributors(wikipage, session):
             pccontinue = data["continue"]["pccontinue"]
         else:
             break
+
+    # Done
+    return wikipage.lang, wikipage.title, inspect.stack()[0][3]
 
 
 def fetch_revisions(wikipage, session):
@@ -207,6 +223,9 @@ def fetch_revisions(wikipage, session):
         else:
             break
 
+    # Done
+    return wikipage.lang, wikipage.title, inspect.stack()[0][3]
+
 
 def fetch_pageviews(wikipage, session):
     """
@@ -229,6 +248,9 @@ def fetch_pageviews(wikipage, session):
         wikipage.add_pageviews(data["items"])
     else:
         wikipage.errors.append("Could not retrieve information (pageviews)")
+
+    # Done
+    return wikipage.lang, wikipage.title, inspect.stack()[0][3]
 
 
 def fetch_text(wikipage, session):
@@ -271,6 +293,9 @@ def fetch_text(wikipage, session):
             break
 
     wikipage.make_text_stats()
+
+    # Done
+    return wikipage.lang, wikipage.title, inspect.stack()[0][3]
 
 
 FETCHERS = [

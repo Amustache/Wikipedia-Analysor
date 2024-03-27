@@ -196,7 +196,7 @@ class WikiQuery:
 
         return found, not_found
 
-    def _fetch_for_all(self, fetch_func):
+    def _fetch_for_all(self):
         for page, langs in self.results.items():
             if self.verbose >= Verbose.INFO:
                 pprint(f"> Fetching for `{page}`")
@@ -210,16 +210,10 @@ class WikiQuery:
                 if self.verbose >= Verbose.DEBUG:
                     pprint(f">> For `{wikipage.lang}/{wikipage.title}`")
 
-                if self.verbose >= Verbose.TRACE:
-                    pprint(f">>> Using `{fetch_func.__name__}`")
-                fetch_func(wikipage, self.s)
-
-    def _fetch_all(self):
-        if self.verbose:
-            pprint("> Fetching all for all pages")
-
-        for fetch_fun in FETCHERS:
-            self._fetch_for_all(fetch_fun)
+                for fetch_fun in FETCHERS:
+                    if self.verbose >= Verbose.TRACE:
+                        pprint(f">>> Using `{fetch_fun.__name__}`")
+                    yield fetch_fun(wikipage, self.s)
 
     def add_targets(self, targets: str | Iterable[str]):
         if isinstance(targets, str):
@@ -246,7 +240,7 @@ class WikiQuery:
 
         return self
 
-    def update(self, force=False):
+    def update(self, force=False, gen=False):
         # If we want to update all the links
         if force:
             self._update_links_to_find(self.targets)
@@ -277,10 +271,19 @@ class WikiQuery:
             }
         )
 
-        # Fetch all attributs, for all pages
-        self._fetch_all()
-
-        return self
+        if gen:
+            # Generator for fetching all attributs, for all pages
+            expected = []
+            for target, langs in self.results.items():
+                if langs:
+                    for lang, wikipage in langs.items():
+                        for fetcher in FETCHERS:
+                            expected.append((wikipage.lang, wikipage.title, fetcher.__name__))
+            return self._fetch_for_all(), expected
+        else:
+            # Exhaust generator
+            list(self._fetch_for_all())
+            return self
 
     def export_json(self, file=None):
         def default_export(obj):
