@@ -131,6 +131,13 @@ class TestQuery(unittest.TestCase):
 
         query.export_json()
 
+    def test_update_generator(self):
+        query = WikiQuery(TEST_ONE_PAGE)
+        gen, expected = query.update(gen=True)
+
+        for todo, target in zip(gen, expected):
+            self.assertEqual(todo, target, msg=f"{todo} vs. {target}")
+
 
 class TestPage(unittest.TestCase):
     def test_simple_page(self):
