@@ -115,7 +115,7 @@ def update_by_lang(selected_person, selected_langs, data):
     """
     Add a row to contain language details, such as contributions, for each language selected.
     """
-    cur_data = data[selected_person]
+    cur_data = data[selected_person] if selected_person else None
 
     if cur_data is None:
         return []
@@ -348,7 +348,7 @@ def update_graph(selected_person, selected_langs, data):
     """
     Update the graph with one or multiple languages.
     """
-    cur_data = data[selected_person]
+    cur_data = data[selected_person] if selected_person else None
 
     if cur_data is None:
         return go.Figure(), {"display": "none"}
