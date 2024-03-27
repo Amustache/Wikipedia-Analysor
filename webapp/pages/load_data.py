@@ -101,7 +101,13 @@ layout = dbc.Container(
 def process_text(n, value):
     if n is not None:
         target_links = value.split("\n")
-        query = WikiQuery(target_links).update()
+
+        query = WikiQuery(target_links)
+        gen, expected = query.update(gen=True)
+
+        for todo in gen:
+            print(todo)  # Feedback
+
         print("Done with processing text")
         return query.export_json(), "Done with processing text"
     else:
@@ -120,7 +126,13 @@ def process_file(content, name, date):
     if content is not None:
         content_type, content_string = content.split(",")
         target_links = base64.b64decode(content_string).decode().replace("\r", "").split("\n")
-        query = WikiQuery(target_links).update()
+
+        query = WikiQuery(target_links)
+        gen, expected = query.update(gen=True)
+
+        for todo in gen:
+            print(todo)  # Feedback
+
         print("Done with processing file")
         return query.export_json(), "Done with processing file"
     else:
@@ -145,7 +157,12 @@ def process_gsheet(n, value):
             res.encoding = res.apparent_encoding  # So that we get properly encoded results
             target_links = [link[0] for link in csv.reader(res.text.strip().split("\n"))]
 
-        query = WikiQuery(target_links).update()
+        query = WikiQuery(target_links)
+        gen, expected = query.update(gen=True)
+
+        for todo in gen:
+            print(todo)  # Feedback
+
         print("Done with processing gsheet")
         return query.export_json(), "Done with processing gsheet"
     else:

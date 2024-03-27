@@ -275,9 +275,10 @@ class WikiQuery:
             # Generator for fetching all attributs, for all pages
             expected = []
             for target, langs in self.results.items():
-                for lang, wikipage in langs.items():
-                    for fetcher in FETCHERS:
-                        expected.append((wikipage.lang, wikipage.title, fetcher.__name__))
+                if langs:
+                    for lang, wikipage in langs.items():
+                        for fetcher in FETCHERS:
+                            expected.append((wikipage.lang, wikipage.title, fetcher.__name__))
             return self._fetch_for_all(), expected
         else:
             # Exhaust generator
