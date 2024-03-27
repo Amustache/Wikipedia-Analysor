@@ -1,6 +1,7 @@
 import base64
 import csv
 import json
+import os
 
 
 from dash import callback, dcc, html, Input, Output, State
@@ -9,10 +10,13 @@ import dash_bootstrap_components as dbc
 import requests
 
 
-from get_from_wikipedia import get_from_wikipedia
+from wikiscrapper.WikiQuery import WikiQuery
 
 
 dash.register_page(__name__, path="/")
+
+with open("example_input", "r") as f:
+    placeholder = f.read()
 
 layout = dbc.Container(
     [
@@ -26,7 +30,7 @@ layout = dbc.Container(
                 dbc.Textarea(
                     id="input_text",
                     className="mb-3",
-                    placeholder="https://fr.wikipedia.org/wiki/École_polytechnique_fédérale_de_Lausanne\nen.wikipedia.org/wiki/Jean-Pierre_Hubaux\nMichael Grätzel",
+                    placeholder=placeholder,
                 ),
                 dbc.Button("Submit", id="submit_text", color="primary"),
             ]
@@ -64,26 +68,22 @@ layout = dbc.Container(
                 dbc.Button("Submit", id="submit_gsheet", color="primary"),
             ]
         ),
-        # Result
-        html.Center(dbc.Spinner(html.Div(id="spinner"), id="spinner-out", color="primary")),
+        html.Br(),
         html.Div(
-            [
-                html.Hr(),
-                html.H2("Resulting query"),
-                dbc.Textarea(
-                    id="queries-text",
-                    className="mb-3",
-                    placeholder="{}",
-                ),
-                html.Center(
-                    [
-                        html.A(dbc.Button("Global dashboard", size="lg", className="me-1"), href="dashboard"),
-                        html.A(dbc.Button("Article dashboard", size="lg", className="me-1"), href="individual"),
-                        dbc.Button("Download resulting query", id="queries-dl", size="lg", className="me-1"),
-                    ]
-                ),
-            ],
-            id="queries",
+            html.Center(
+                [
+                    dbc.Progress(id="progress", animated=True, striped=True),
+                    html.P(id="result"),
+                    html.Hr(),
+                    html.Div(
+                        [
+                            html.A(dbc.Button("Global dashboard", size="lg", className="me-1"), href="dashboard"),
+                            html.A(dbc.Button("Article dashboard", size="lg", className="me-1"), href="individual"),
+                            dbc.Button("Download resulting query", id="queries-dl", size="lg", className="me-1"),
+                        ]
+                    ),
+                ]
+            )
         ),
     ]
 )
@@ -91,23 +91,62 @@ layout = dbc.Container(
 
 @callback(
     Output("data", "data"),
-    Output("spinner", "children"),
     Input("submit_text", "n_clicks"),
     Input("input_text", "value"),
+    background=True,
+    running=[
+        (
+            Output("progress", "style"),
+            {"visibility": "visible"},
+            {"visibility": "hidden"},
+        ),
+    ],
+    cancel=[],
+    progress=[
+        Output("progress", "value"),
+        Output("progress", "max"),
+        Output("progress", "label"),
+        Output("result", "children"),
+    ],
+    prevent_initial_call=True,
 )
-def process_text(n, value):
+def process_text(set_progress, n, value):
     if n is not None:
         target_links = value.split("\n")
-        queries = get_from_wikipedia(target_links)
+
+        query = WikiQuery(target_links)
+        gen, expected = query.update(gen=True)
+        total_todo = len(expected)
+
+        for i, todo in enumerate(gen):
+            set_progress(
+                (
+                    i,
+                    total_todo,
+                    f"{int(100 * i // total_todo)} %",
+                    f"Current action: {'/'.join(todo)}",
+                )
+            )
+
         print("Done with processing text")
-        return queries, "Done with processing text"
+
+        set_progress(
+            (
+                total_todo,
+                total_todo,
+                "100 %",
+                "Done!",
+            )
+        )
+
+        res = query.export_json()
+        return res
     else:
-        return None, None
+        return None
 
 
 @callback(
     Output("data", "data", allow_duplicate=True),
-    Output("spinner", "children", allow_duplicate=True),
     Input("input_file", "contents"),
     State("input_file", "filename"),
     State("input_file", "last_modified"),
@@ -117,16 +156,22 @@ def process_file(content, name, date):
     if content is not None:
         content_type, content_string = content.split(",")
         target_links = base64.b64decode(content_string).decode().replace("\r", "").split("\n")
-        queries = get_from_wikipedia(target_links)
+
+        query = WikiQuery(target_links)
+        gen, expected = query.update(gen=True)
+
+        for todo in gen:
+            print(todo)  # Feedback
+
         print("Done with processing file")
-        return queries, "Done with processing file"
+        res = query.export_json()
+        return res
     else:
-        return None, None
+        return None
 
 
 @callback(
     Output("data", "data", allow_duplicate=True),
-    Output("spinner", "children", allow_duplicate=True),
     Input("submit_gsheet", "n_clicks"),
     Input("input_gsheet", "value"),
     prevent_initial_call="initial_duplicate",
@@ -142,20 +187,14 @@ def process_gsheet(n, value):
             res.encoding = res.apparent_encoding  # So that we get properly encoded results
             target_links = [link[0] for link in csv.reader(res.text.strip().split("\n"))]
 
-        queries = get_from_wikipedia(target_links)
+        query = WikiQuery(target_links)
+        gen, expected = query.update(gen=True)
+
+        for todo in gen:
+            print(todo)  # Feedback
+
         print("Done with processing gsheet")
-        return queries, "Done with processing gsheet"
+        res = query.export_json()
+        return res
     else:
-        return None, None
-
-
-@callback(
-    Output("queries-text", "value"),
-    Output("queries", "style"),
-    Input("data", "data"),
-)
-def show_query(data):
-    if data is not None:
-        return json.dumps(data, indent=2, ensure_ascii=False), {"display": "inline"}
-    else:
-        return None, {"display": "none"}
+        return None

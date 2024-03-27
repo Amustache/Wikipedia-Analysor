@@ -1,5 +1,5 @@
 black==23.7.0
-dash==2.13.0
+dash[diskcache]==2.13.0
 dash-bootstrap-components==1.4.2
 iso639==0.1.4
 isort==5.12.0

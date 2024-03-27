@@ -9,8 +9,8 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 
 
-from get_from_wikipedia import DEFAULT_LANGS
 from webapp.helpers import create_main_fig, get_color
+from wikiscrapper.helpers import DEFAULT_LANGS
 
 
 dash.register_page(__name__)
@@ -28,8 +28,8 @@ layout = dbc.Container(
                     [
                         dcc.Dropdown(
                             id="top-langs",
-                            options=DEFAULT_LANGS,
-                            value=DEFAULT_LANGS[0],
+                            options=list(DEFAULT_LANGS),
+                            value=list(DEFAULT_LANGS)[0],
                             clearable=False,
                         ),
                         html.Ol(id="debug"),
