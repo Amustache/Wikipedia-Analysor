@@ -178,7 +178,11 @@ class WikiQuery:
 
                     # Page is found
                     # Add languages
-                    result[title]["langlinks"] = {langlink["lang"]: langlink["*"] for langlink in content["langlinks"]}
+                    result[title]["langlinks"] = {}
+                    if "langlinks" in content:
+                        result[title]["langlinks"].update(
+                            {langlink["lang"]: langlink["*"] for langlink in content["langlinks"]}
+                        )
                     result[title]["langlinks"].update({query_lang: title})
 
                     # Will only keep the latest successful result for same name pages
