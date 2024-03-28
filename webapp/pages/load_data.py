@@ -5,6 +5,7 @@ import csv
 from dash import callback, dash_table, dcc, html, Input, Output, State
 import dash
 import dash_bootstrap_components as dbc
+import pandas as pd
 import requests
 
 
@@ -130,9 +131,15 @@ controls = dbc.Card(
     ]
 )
 
-columns = {
+DATATABLE_COLUMNS = {
+    # Base
     "lang": "Language",
-    "title": "Title",
+    "title": "Title",  # With link to the page
+    "description": "Description",  # or Error
+    # Computed
+    "pop_score": "Popularity score",
+    "qual_score": "Quality score",
+    "pri_score": "Priority score",
 }
 
 results = dbc.Card(
@@ -141,7 +148,7 @@ results = dbc.Card(
             dash_table.DataTable(
                 id="datatable",
                 data=None,  # Dynamic
-                columns=[{"name": v, "id": k} for k, v in columns.items()],
+                columns=[{"name": v, "id": k} for k, v in DATATABLE_COLUMNS.items()],
                 style_cell={
                     "overflow": "hidden",
                     "textOverflow": "ellipsis",
@@ -281,3 +288,36 @@ def process_input(
         return res, 0
     else:
         return None, 0
+
+
+@callback(
+    Output("datatable", "data"),
+    Input("data", "data"),
+)
+def process_data(data):
+    df = pd.DataFrame()
+
+    for page, langs in data.items():
+        if langs is not None:
+            for lang, content in langs.items():
+                res = [
+                    content["lang"],
+                    content["title"],
+                    content["description"],
+                    -1,
+                    -1,
+                    -1,
+                ]
+                df = pd.concat([pd.DataFrame([res], columns=DATATABLE_COLUMNS), df], ignore_index=True)
+        else:
+            res = [
+                "/",
+                page,
+                "(no match found)",
+                -1,
+                -1,
+                -1,
+            ]
+            df = pd.concat([pd.DataFrame([res], columns=DATATABLE_COLUMNS), df], ignore_index=True)
+
+    return df.to_dict(orient="records")
