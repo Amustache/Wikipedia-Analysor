@@ -18,7 +18,7 @@ from wikiscrapper.helpers import GLOBAL_LIMIT, wiki_quote
 
 dash.register_page(__name__)
 
-layout = dbc.Container(
+layout = html.Div(
     [
         html.H2("", id="page_title"),
         # Dropdowns (person & lang)
@@ -72,7 +72,6 @@ layout = dbc.Container(
             ]
         ),
     ],
-    fluid="xl",
 )
 
 

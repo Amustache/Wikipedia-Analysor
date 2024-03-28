@@ -54,7 +54,8 @@ app.layout = dbc.Container(
                 ]
             )
         ),
-    ]
+    ],
+    fluid=True,
 )
 
 # Debug

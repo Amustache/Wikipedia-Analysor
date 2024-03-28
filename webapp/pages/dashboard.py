@@ -15,7 +15,7 @@ from wikiscrapper.helpers import DEFAULT_LANGS
 
 dash.register_page(__name__)
 
-layout = dbc.Container(
+layout = html.Div(
     [
         html.H2("Dashboard"),
         html.Br(),
@@ -54,7 +54,6 @@ layout = dbc.Container(
         #     ]),
         # ]),
     ],
-    fluid="xl",
 )
 
 
