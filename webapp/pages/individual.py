@@ -145,7 +145,7 @@ def update_by_lang(selected_person, selected_langs, data):
                 )
             ),
         ]
-        if "pageassessments" in cur_data[lang]:
+        if "pageassessments" in cur_data[lang] and len(cur_data[lang]["pageassessments"]) > 0:
             for category, obj in cur_data[lang]["pageassessments"].items():
                 class_importance.append(html.Dt(category))
                 cnt = []
