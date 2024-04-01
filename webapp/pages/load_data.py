@@ -178,8 +178,12 @@ results = dbc.Card(
                 ),
                 html.Div(
                     [
-                        html.A(dbc.Button("Global dashboard", className="me-1"), href="dashboard"),
-                        html.A(dbc.Button("Article dashboard", className="me-1"), href="individual"),
+                        dbc.Button(
+                            "Global dashboard", id="global_button", className="me-1", disabled=True, href="dashboard"
+                        ),
+                        dbc.Button(
+                            "Article dashboard", id="article_button", className="me-1", disabled=True, href="individual"
+                        ),
                         # dbc.Button("Download resulting query", id="queries-dl", size="lg", className="me-1"),
                     ],
                     id="buttons",
@@ -293,6 +297,8 @@ def process_input(
 
 @callback(
     Output("datatable", "data"),
+    Output("global_button", "disabled"),
+    Output("article_button", "disabled"),
     Input("data", "data"),
     prevent_initial_call=True,
 )
@@ -323,4 +329,6 @@ def process_data(data):
                 ]
                 df = pd.concat([pd.DataFrame([res], columns=DATATABLE_COLUMNS), df], ignore_index=True)
 
-        return df.to_dict(orient="records")
+        return df.to_dict(orient="records"), False, False
+    else:
+        return None, True, True
