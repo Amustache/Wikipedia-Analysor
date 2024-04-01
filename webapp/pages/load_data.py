@@ -294,31 +294,33 @@ def process_input(
 @callback(
     Output("datatable", "data"),
     Input("data", "data"),
+    prevent_initial_call=True,
 )
 def process_data(data):
-    df = pd.DataFrame()
+    if data is not None:
+        df = pd.DataFrame()
 
-    for page, langs in data.items():
-        if langs is not None:
-            for lang, content in langs.items():
+        for page, langs in data.items():
+            if langs is not None:
+                for lang, content in langs.items():
+                    res = [
+                        content["lang"],
+                        content["title"],
+                        content["description"],
+                        -1,
+                        -1,
+                        -1,
+                    ]
+                    df = pd.concat([pd.DataFrame([res], columns=DATATABLE_COLUMNS), df], ignore_index=True)
+            else:
                 res = [
-                    content["lang"],
-                    content["title"],
-                    content["description"],
+                    "/",
+                    page,
+                    "(no match found)",
                     -1,
                     -1,
                     -1,
                 ]
                 df = pd.concat([pd.DataFrame([res], columns=DATATABLE_COLUMNS), df], ignore_index=True)
-        else:
-            res = [
-                "/",
-                page,
-                "(no match found)",
-                -1,
-                -1,
-                -1,
-            ]
-            df = pd.concat([pd.DataFrame([res], columns=DATATABLE_COLUMNS), df], ignore_index=True)
 
-    return df.to_dict(orient="records")
+        return df.to_dict(orient="records")
