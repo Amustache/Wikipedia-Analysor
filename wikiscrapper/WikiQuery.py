@@ -66,6 +66,7 @@ class WikiQuery:
             self.targets = {self.targets}
         if not isinstance(self.targets, set):
             self.targets = set(self.targets)
+        self.targets = set(filter(None, self.targets))  # Remove empty
 
         # Create set for langs
         if self.target_langs is None:
@@ -304,3 +305,23 @@ class WikiQuery:
                 )
         else:
             return res
+
+    @property
+    def num_targets(self):
+        return len(self.targets)
+
+    @property
+    def num_targets_langs(self):
+        return len(self.target_langs)
+
+    @property
+    def num_targets_not_found(self):
+        return sum(value is None for value in self.results.values())
+
+    @property
+    def num_targets_found(self):
+        return sum(value is not None for value in self.results.values())
+
+    @property
+    def num_pages(self):
+        return sum(len(value) for value in self.results.values() if value is not None)

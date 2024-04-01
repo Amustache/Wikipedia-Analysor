@@ -153,11 +153,18 @@ class TestPage(unittest.TestCase):
             for attribute, content in page.__dict__.items():
                 self.assertIsNotNone(content, msg=f"{page.lang}/{page.title}: {attribute}")
 
+        self.assertEqual(query.num_targets_not_found, 0)
+        self.assertEqual(query.num_targets_found, 1)
+        self.assertEqual(query.num_pages, 3)
+
     def test_page_error(self):
         query = WikiQuery("Nah mate this page does not exist")
         query.update()
 
         self.assertIsNone(next(iter(query.results.values())))
+        self.assertEqual(query.num_targets_not_found, 1)
+        self.assertEqual(query.num_targets_found, 0)
+        self.assertEqual(query.num_pages, 0)
 
     def test_export_json(self):
         query = WikiQuery(TEST_ONE_PAGE)

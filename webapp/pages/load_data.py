@@ -1,15 +1,15 @@
 import base64
 import csv
-import json
-import os
 
 
-from dash import callback, dcc, html, Input, Output, State
+from dash import callback, dash_table, dcc, html, Input, Output, State
 import dash
 import dash_bootstrap_components as dbc
+import pandas as pd
 import requests
 
 
+from wikiscrapper.helpers import DEFAULT_DURATION, DEFAULT_LANGS
 from wikiscrapper.WikiQuery import WikiQuery
 
 
@@ -18,88 +18,217 @@ dash.register_page(__name__, path="/")
 with open("example_input", "r") as f:
     placeholder = f.read()
 
-layout = dbc.Container(
+controls = dbc.Card(
     [
-        html.H2("Input your Wikipedia pages"),
-        html.P("Can be either a full link, or a page name. One article per row."),
-        html.Br(),
-        # Text input
-        html.H3("Copy-paste your inputs"),
-        dbc.Form(
-            [
-                dbc.Textarea(
-                    id="input_text",
-                    className="mb-3",
-                    placeholder=placeholder,
-                ),
-                dbc.Button("Submit", id="submit_text", color="primary"),
-            ]
-        ),
-        html.Br(),
-        # File input
-        html.H3("Or, upload a file"),
-        dcc.Upload(
-            id="input_file",
-            children=html.Div(["Drag and Drop or ", html.A("Select Files")]),
-            style={
-                "width": "100%",
-                "height": "60px",
-                "lineHeight": "60px",
-                "borderWidth": "1px",
-                "borderStyle": "dashed",
-                "borderRadius": "5px",
-                "textAlign": "center",
-            },
-            # Allow multiple files to be uploaded
-            multiple=False,
-        ),
-        html.Div(id="output-data-upload"),
-        html.Br(),
-        # GSheet input
-        html.H3("Or, provide a link to a Google Sheet"),
-        dbc.Form(
-            [
-                dbc.Input(
-                    id="input_gsheet",
-                    className="mb-3",
-                    placeholder="https://docs.google.com/spreadsheets/d/ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefgh/edit",
-                    type="text",
-                ),
-                dbc.Button("Submit", id="submit_gsheet", color="primary"),
-            ]
-        ),
-        html.Br(),
-        html.Div(
-            html.Center(
+        dbc.CardBody(
+            dbc.Form(
                 [
-                    dbc.Progress(id="progress", animated=True, striped=True),
-                    html.P(id="result"),
-                    html.Hr(),
+                    html.Legend("Input your Wikipedia pages"),
                     html.Div(
                         [
-                            html.A(dbc.Button("Global dashboard", size="lg", className="me-1"), href="dashboard"),
-                            html.A(dbc.Button("Article dashboard", size="lg", className="me-1"), href="individual"),
-                            dbc.Button("Download resulting query", id="queries-dl", size="lg", className="me-1"),
+                            dbc.Label("One link per line", html_for="input_text"),
+                            dbc.Textarea(
+                                id="input_text",
+                                className="mb-2",
+                                placeholder=placeholder,
+                            ),
                         ]
+                    ),
+                    html.Div(
+                        [
+                            dbc.Label("Or, upload a file", html_for="input_file"),
+                            dcc.Upload(
+                                id="input_file",
+                                className="mb-2",
+                                children=html.Div(["Drag and Drop or ", html.A("Select Files")]),
+                                style={
+                                    "width": "100%",
+                                    "height": "60px",
+                                    "lineHeight": "60px",
+                                    "borderWidth": "1px",
+                                    "borderStyle": "dashed",
+                                    "borderRadius": "5px",
+                                    "textAlign": "center",
+                                },
+                                # Allow multiple files to be uploaded
+                                multiple=False,
+                            ),
+                        ]
+                    ),
+                    html.Div(
+                        [
+                            dbc.Label("Or, provide a link to a Google Sheet", html_for="input_gsheet"),
+                            dbc.Input(
+                                id="input_gsheet",
+                                className="mb-2",
+                                placeholder="https://docs.google.com/spreadsheets/d/ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefgh/edit",
+                                type="text",
+                            ),
+                        ]
+                    ),
+                    dbc.Collapse(
+                        html.Div(
+                            [
+                                html.Legend("More options"),
+                                dbc.Row(
+                                    [
+                                        dbc.Label("Target languages", html_for="target_languages", width=4),
+                                        dbc.Col(
+                                            dbc.Input(
+                                                id="target_languages",
+                                                className="mb-2",
+                                                placeholder="Please use shortcodes",
+                                                value=",".join(DEFAULT_LANGS),
+                                                type="text",
+                                            ),
+                                            width=8,
+                                        ),
+                                    ],
+                                ),
+                                dbc.Row(
+                                    [
+                                        dbc.Label("Target duration", html_for="target_duration", width=4),
+                                        dbc.Col(
+                                            dbc.Input(
+                                                id="target_duration",
+                                                className="mb-2",
+                                                placeholder="In days",
+                                                value=str(DEFAULT_DURATION),
+                                                type="text",
+                                            ),
+                                            width=8,
+                                        ),
+                                    ],
+                                ),
+                            ]
+                        ),
+                        id="collapse",
+                        is_open=False,
+                        className="mb-3",
+                    ),
+                    html.Div(
+                        [
+                            dbc.Button(
+                                "More options",
+                                id="collapse-button",
+                                className="mb-3 me-2",
+                                color="secondary",
+                                n_clicks=0,
+                            ),
+                            dbc.Button(
+                                "Submit",
+                                id="submit",
+                                className="mb-3 me-2",
+                                color="primary",
+                                n_clicks=0,
+                            ),
+                        ],
+                        className="float-end",
                     ),
                 ]
             )
+        )
+    ]
+)
+
+DATATABLE_COLUMNS = {
+    # Base
+    "lang": "Language",
+    "title": "Title",  # With link to the page
+    "description": "Description",  # or Error
+    # Computed
+    "pop_score": "Popularity score",
+    "qual_score": "Quality score",
+    "pri_score": "Priority score",
+}
+
+results = dbc.Card(
+    [
+        dbc.CardBody(
+            dash_table.DataTable(
+                id="datatable",
+                data=None,  # Dynamic
+                columns=[{"name": v, "id": k} for k, v in DATATABLE_COLUMNS.items()],
+                style_cell={
+                    "overflow": "hidden",
+                    "textOverflow": "ellipsis",
+                    "maxWidth": 0,
+                },
+                tooltip_data=None,  # Dynamic
+                tooltip_duration=None,
+                filter_action="native",
+                sort_action="native",
+                sort_mode="multi",
+                row_selectable="multi",
+                selected_columns=[],
+                selected_rows=[],
+                page_action="native",
+                page_current=0,
+                page_size=10,
+            )
         ),
+        dbc.CardFooter(
+            [
+                html.Div(
+                    [
+                        dbc.Progress(id="progress", animated=True, striped=True),
+                        html.P(id="result", style={"text-align": "center"}),
+                    ],
+                    id="loading",
+                ),
+                html.Div(
+                    [
+                        dbc.Button(
+                            "Global dashboard", id="global_button", className="me-1", disabled=True, href="dashboard"
+                        ),
+                        dbc.Button(
+                            "Article dashboard", id="article_button", className="me-1", disabled=True, href="individual"
+                        ),
+                        # dbc.Button("Download resulting query", id="queries-dl", size="lg", className="me-1"),
+                    ],
+                    id="buttons",
+                    className="float-end",
+                ),
+            ],
+            id="results_footers",
+        ),
+    ]
+)
+
+layout = html.Div(
+    [
+        dbc.Row([dbc.Col(controls, md=4), dbc.Col(results, md=8)]),
     ]
 )
 
 
 @callback(
+    Output("collapse", "is_open"),
+    [Input("collapse-button", "n_clicks")],
+    [State("collapse", "is_open")],
+)
+def toggle_collapse(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
+
+@callback(
     Output("data", "data"),
-    Input("submit_text", "n_clicks"),
+    Output("submit", "n_clicks"),
+    Input("submit", "n_clicks"),
     Input("input_text", "value"),
+    Input("input_file", "contents"),
+    Input("input_gsheet", "value"),
+    State("input_file", "filename"),
+    State("input_file", "last_modified"),
     background=True,
     running=[
         (
             Output("progress", "style"),
             {"visibility": "visible"},
             {"visibility": "hidden"},
-        ),
+        )
     ],
     cancel=[],
     progress=[
@@ -110,9 +239,32 @@ layout = dbc.Container(
     ],
     prevent_initial_call=True,
 )
-def process_text(set_progress, n, value):
-    if n is not None:
-        target_links = value.split("\n")
+def process_input(
+    set_progress,
+    n,
+    input_text,
+    input_file_content,
+    input_gsheet,
+    input_file_name,
+    input_file_date,
+):
+    if n is not None and n > 0:
+        if input_text is not None:
+            target_links = input_text.split("\n")
+        elif input_file_content is not None:
+            content_type, content_string = input_file_content.split(",")
+            target_links = base64.b64decode(content_string).decode().replace("\r", "").split("\n")
+        elif input_gsheet is not None:
+            csv_url = input_gsheet.replace("edit", "export?format=csv")
+
+            res = requests.get(url=csv_url)
+            if res.status_code != 200:
+                return None, None
+            else:
+                res.encoding = res.apparent_encoding  # So that we get properly encoded results
+                target_links = [link[0] for link in csv.reader(res.text.strip().split("\n"))]
+        else:
+            target_links = None
 
         query = WikiQuery(target_links)
         gen, expected = query.update(gen=True)
@@ -128,73 +280,55 @@ def process_text(set_progress, n, value):
                 )
             )
 
-        print("Done with processing text")
-
         set_progress(
             (
                 total_todo,
                 total_todo,
                 "100 %",
-                "Done!",
+                f"Done! Found {query.num_pages} pages in {query.num_targets_langs} languages from {query.num_targets} targets ({query.num_targets_not_found} errors).",
             )
         )
 
         res = query.export_json()
-        return res
+        return res, 0
     else:
-        return None
+        return None, 0
 
 
 @callback(
-    Output("data", "data", allow_duplicate=True),
-    Input("input_file", "contents"),
-    State("input_file", "filename"),
-    State("input_file", "last_modified"),
-    prevent_initial_call="initial_duplicate",
+    Output("datatable", "data"),
+    Output("global_button", "disabled"),
+    Output("article_button", "disabled"),
+    Input("data", "data"),
+    prevent_initial_call=True,
 )
-def process_file(content, name, date):
-    if content is not None:
-        content_type, content_string = content.split(",")
-        target_links = base64.b64decode(content_string).decode().replace("\r", "").split("\n")
+def process_data(data):
+    if data is not None:
+        df = pd.DataFrame()
 
-        query = WikiQuery(target_links)
-        gen, expected = query.update(gen=True)
+        for page, langs in data.items():
+            if langs is not None:
+                for lang, content in langs.items():
+                    res = [
+                        content["lang"],
+                        content["title"],
+                        content["description"],
+                        -1,
+                        -1,
+                        -1,
+                    ]
+                    df = pd.concat([pd.DataFrame([res], columns=DATATABLE_COLUMNS), df], ignore_index=True)
+            else:
+                res = [
+                    "/",
+                    page,
+                    "(no match found)",
+                    -1,
+                    -1,
+                    -1,
+                ]
+                df = pd.concat([pd.DataFrame([res], columns=DATATABLE_COLUMNS), df], ignore_index=True)
 
-        for todo in gen:
-            print(todo)  # Feedback
-
-        print("Done with processing file")
-        res = query.export_json()
-        return res
+        return df.to_dict(orient="records"), False, False
     else:
-        return None
-
-
-@callback(
-    Output("data", "data", allow_duplicate=True),
-    Input("submit_gsheet", "n_clicks"),
-    Input("input_gsheet", "value"),
-    prevent_initial_call="initial_duplicate",
-)
-def process_gsheet(n, value):
-    if n is not None:
-        csv_url = value.replace("edit", "export?format=csv")
-
-        res = requests.get(url=csv_url)
-        if res.status_code != 200:
-            return None, None
-        else:
-            res.encoding = res.apparent_encoding  # So that we get properly encoded results
-            target_links = [link[0] for link in csv.reader(res.text.strip().split("\n"))]
-
-        query = WikiQuery(target_links)
-        gen, expected = query.update(gen=True)
-
-        for todo in gen:
-            print(todo)  # Feedback
-
-        print("Done with processing gsheet")
-        res = query.export_json()
-        return res
-    else:
-        return None
+        return None, True, True

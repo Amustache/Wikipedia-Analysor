@@ -15,7 +15,7 @@ from wikiscrapper.helpers import DEFAULT_LANGS
 
 dash.register_page(__name__)
 
-layout = dbc.Container(
+layout = html.Div(
     [
         html.H2("Dashboard"),
         html.Br(),
@@ -54,7 +54,6 @@ layout = dbc.Container(
         #     ]),
         # ]),
     ],
-    fluid="xl",
 )
 
 
@@ -68,18 +67,17 @@ layout = dbc.Container(
 def update_top5(selected_lang, data):
     tops = []
     for person, content in data.items():
-        if "error" in content:
-            print("error")
+        if content is None:
             continue
 
-        for lang, obj in content["langs"].items():
+        for lang, obj in content.items():
             if lang != selected_lang:
                 continue
 
             if len(tops) < 5:
                 tops.append(
                     {
-                        "name": obj["name"],
+                        "title": obj["title"],
                         "pageviews_total": obj["pageviews_total"],
                         "pageviews_en": obj["pageviews"]["items"],  # "timestamp", "views"
                     }
@@ -88,7 +86,7 @@ def update_top5(selected_lang, data):
                 # If last object has less pageview, replace
                 if obj["pageviews_total"] > tops[-1]["pageviews_total"]:
                     tops[-1] = {
-                        "name": obj["name"],
+                        "title": obj["title"],
                         "pageviews_total": obj["pageviews_total"],
                         "pageviews_en": obj["pageviews"]["items"],  # "timestamp", "views"
                     }
@@ -98,8 +96,8 @@ def update_top5(selected_lang, data):
     figs = list()
     for top in tops:
         df = pd.read_json(json.dumps(top["pageviews_en"]))
-        fig_line = px.line(df, x="timestamp", y="views", hover_name=len(top["pageviews_en"]) * [top["name"]])
-        fig_line.update_traces(line_color=get_color(top["name"]))
+        fig_line = px.line(df, x="timestamp", y="views", hover_name=len(top["pageviews_en"]) * [top["title"]])
+        fig_line.update_traces(line_color=get_color(top["title"]))
         figs.append(fig_line)
 
     try:
@@ -118,5 +116,5 @@ def update_top5(selected_lang, data):
     return (
         fig,
         style,
-        [html.Li(f"{top['name']}: {top['pageviews_total']} views") for top in tops],
+        [html.Li(f"{top['title']}: {top['pageviews_total']} views") for top in tops],
     )

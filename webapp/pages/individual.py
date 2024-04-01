@@ -18,7 +18,7 @@ from wikiscrapper.helpers import GLOBAL_LIMIT, wiki_quote
 
 dash.register_page(__name__)
 
-layout = dbc.Container(
+layout = html.Div(
     [
         html.H2("", id="page_title"),
         # Dropdowns (person & lang)
@@ -72,7 +72,6 @@ layout = dbc.Container(
             ]
         ),
     ],
-    fluid="xl",
 )
 
 
@@ -83,7 +82,7 @@ layout = dbc.Container(
 )
 def load_data(data):
     if data is not None:
-        people = list(data.keys())
+        people = list(person for person, langs in data.items() if langs is not None)
         return people, people[0]
 
 
@@ -146,7 +145,7 @@ def update_by_lang(selected_person, selected_langs, data):
                 )
             ),
         ]
-        if "pageassessments" in cur_data[lang]:
+        if "pageassessments" in cur_data[lang] and len(cur_data[lang]["pageassessments"]) > 0:
             for category, obj in cur_data[lang]["pageassessments"].items():
                 class_importance.append(html.Dt(category))
                 cnt = []
