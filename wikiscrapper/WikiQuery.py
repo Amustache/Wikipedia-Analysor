@@ -66,6 +66,7 @@ class WikiQuery:
             self.targets = {self.targets}
         if not isinstance(self.targets, set):
             self.targets = set(self.targets)
+        self.targets = set(filter(None, self.targets))  # Remove empty
 
         # Create set for langs
         if self.target_langs is None:
