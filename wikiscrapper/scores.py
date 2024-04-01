@@ -17,7 +17,7 @@ def _score_language(langlinks: set) -> int:
     score += sum(1 for lang in langlinks if lang in top_langs)
     score += sum(2 for lang in langlinks if lang not in top_langs)
 
-    return normalise(score, min, max)
+    return normalise(score, min_score, max_score)
 
 
 def _score_contributors(contributors: list) -> int:
@@ -27,7 +27,7 @@ def _score_contributors(contributors: list) -> int:
     max_score = 125_000
     score = len(contributors)
 
-    return normalise(score, min, max)
+    return normalise(score, min_score, max_score)
 
 
 def _score_revisions(revisions: list) -> int:
@@ -37,43 +37,45 @@ def _score_revisions(revisions: list) -> int:
     max_score = 50_000
     score = len(revisions)
 
-    return normalise(score, min, max)
+    return normalise(score, min_score, max_score)
 
 
 def _score_recent_revisions(revisions: list) -> int:
-    return NotImplementedError
+    # return NotImplementedError
     min_score = 1
     max_score = 100
     score = 50
+
+    return normalise(score, min_score, max_score)
 
 
 def _score_backlinks(revisions: list) -> int:
-    return NotImplementedError
+    # return NotImplementedError
     min_score = 1
     max_score = 100
     score = 50
 
-    return normalise(score, min, max)
+    return normalise(score, min_score, max_score)
 
 
 def _score_pageviews(revisions: list) -> int:
-    return NotImplementedError
+    # return NotImplementedError
     min_score = 1
     # https://en.wikipedia.org/wiki/Wikipedia:Popular_pages#Top-100_list
     max_score = 100
     score = 50
 
-    return normalise(score, min, max)
+    return normalise(score, min_score, max_score)
 
 
 def _score_pageassessments(pageassessments: list) -> int:
-    return NotImplementedError
+    # return NotImplementedError
     min_score = 1
     #
     max_score = 100
     score = 50
 
-    return normalise(score, min, max)
+    return normalise(score, min_score, max_score)
 
 
 def _score_fres(fres: dict) -> int:
@@ -81,7 +83,7 @@ def _score_fres(fres: dict) -> int:
     max_score = fres["max"]
     score = fres["result"]
 
-    return normalise(score, min, max)
+    return normalise(score, min_score, max_score)
 
 
 def get_pop_score(wikipage) -> int:
@@ -104,7 +106,7 @@ def get_qual_score(wikipage) -> int:
         + _score_recent_revisions(wikipage.revisions)
         + _score_pageassessments(wikipage.pageassessments)
         + _score_fres(wikipage.readability["fres"])
-    )
+    ) / 5
 
     return normalise(score)
 
