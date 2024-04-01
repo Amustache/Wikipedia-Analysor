@@ -178,14 +178,15 @@ results = dbc.Card(
                 ),
                 html.Div(
                     [
-                        html.A(dbc.Button("Global dashboard", size="lg", className="me-1"), href="dashboard"),
-                        html.A(dbc.Button("Article dashboard", size="lg", className="me-1"), href="individual"),
+                        html.A(dbc.Button("Global dashboard", className="me-1"), href="dashboard"),
+                        html.A(dbc.Button("Article dashboard", className="me-1"), href="individual"),
                         # dbc.Button("Download resulting query", id="queries-dl", size="lg", className="me-1"),
                     ],
                     id="buttons",
                     className="float-end",
                 ),
-            ]
+            ],
+            id="results_footers",
         ),
     ]
 )
@@ -220,10 +221,10 @@ def toggle_collapse(n, is_open):
     background=True,
     running=[
         (
-            Output("progress", "style"),
+            Output("loading", "style"),
             {"visibility": "visible"},
             {"visibility": "hidden"},
-        ),
+        )
     ],
     cancel=[],
     progress=[
