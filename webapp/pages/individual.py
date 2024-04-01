@@ -82,7 +82,7 @@ layout = html.Div(
 )
 def load_data(data):
     if data is not None:
-        people = list(data.keys())
+        people = list(person for person, langs in data.items() if langs is not None)
         return people, people[0]
 
 
