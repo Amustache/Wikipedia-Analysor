@@ -8,6 +8,7 @@ from textstat import textstat
 
 
 from wikiscrapper.helpers import ACCESS, AGENTS, GRANULARITY
+from wikiscrapper.scores import get_pop_score, get_pri_score, get_qual_score
 
 
 @dataclass
@@ -212,7 +213,16 @@ class WikiPage:
             else:
                 return "???"
 
-        res = json.loads(json.dumps(self.__dict__, default=default_export))
+        to_dump = self.__dict__.copy()
+        to_dump.update(
+            {
+                "pop_score": self.pop_score,
+                "qual_score": self.qual_score,
+                "pri_score": self.pri_score,
+            }
+        )
+
+        res = json.loads(json.dumps(to_dump, default=default_export))
 
         if file:
             with open(file, "w") as f:
@@ -224,3 +234,24 @@ class WikiPage:
                 )
         else:
             return res
+
+    @property
+    def pop_score(self):
+        if not hasattr(self, "_pop_score") or self._pop_score is None:
+            self._pop_score = get_pop_score(self)
+
+        return self._pop_score
+
+    @property
+    def qual_score(self):
+        if not hasattr(self, "_qual_score") or self._qual_score is None:
+            self._qual_score = get_qual_score(self)
+
+        return self._qual_score
+
+    @property
+    def pri_score(self):
+        if not hasattr(self, "_pri_score") or self._pri_score is None:
+            self._pri_score = get_pri_score(self)
+
+        return self._pri_score

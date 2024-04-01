@@ -280,6 +280,8 @@ def process_input(
                 )
             )
 
+        query.calculate_scores()
+
         set_progress(
             (
                 total_todo,
@@ -313,9 +315,9 @@ def process_data(data):
                         content["lang"],
                         content["title"],
                         content["description"],
-                        -1,
-                        -1,
-                        -1,
+                        content["pop_score"],
+                        content["qual_score"],
+                        content["pri_score"],
                     ]
                     df = pd.concat([pd.DataFrame([res], columns=DATATABLE_COLUMNS), df], ignore_index=True)
             else:
