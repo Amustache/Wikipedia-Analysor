@@ -304,3 +304,15 @@ class WikiQuery:
                 )
         else:
             return res
+
+    @property
+    def num_targets_not_found(self):
+        return sum(value is None for value in self.results.values())
+
+    @property
+    def num_targets_found(self):
+        return sum(value is not None for value in self.results.values())
+
+    @property
+    def num_pages(self):
+        return sum(len(value) for value in self.results.values() if value is not None)
