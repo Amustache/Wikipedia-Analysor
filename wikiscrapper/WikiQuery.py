@@ -325,3 +325,9 @@ class WikiQuery:
     @property
     def num_pages(self):
         return sum(len(value) for value in self.results.values() if value is not None)
+
+    def calculate_scores(self):
+        for target, langs in self.results.items():
+            if langs:
+                for lang, wikipage in langs.items():
+                    _ = wikipage.pri_score  # Only used to get the actual data
