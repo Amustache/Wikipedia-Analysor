@@ -172,7 +172,7 @@ results = dbc.Card(
                 html.Div(
                     [
                         dbc.Progress(id="progress", animated=True, striped=True),
-                        html.P(id="result"),
+                        html.P(id="result", style={"text-align": "center"}),
                     ],
                     id="loading",
                 ),
@@ -225,7 +225,7 @@ def toggle_collapse(n, is_open):
     background=True,
     running=[
         (
-            Output("loading", "style"),
+            Output("progress", "style"),
             {"visibility": "visible"},
             {"visibility": "hidden"},
         )
@@ -285,7 +285,7 @@ def process_input(
                 total_todo,
                 total_todo,
                 "100 %",
-                "Done!",
+                f"Done! Found {query.num_pages} pages in {query.num_targets_langs} languages from {query.num_targets} targets ({query.num_targets_not_found} errors).",
             )
         )
 
