@@ -116,4 +116,4 @@ def get_pri_score(wikipage) -> int:
     max_score = 100 / 1
     score = get_pop_score(wikipage) / get_qual_score(wikipage)
 
-    return normalise(score, min_score, max_score)
+    return int(100 * score)
