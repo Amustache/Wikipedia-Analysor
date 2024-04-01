@@ -306,6 +306,14 @@ class WikiQuery:
             return res
 
     @property
+    def num_targets(self):
+        return len(self.targets)
+
+    @property
+    def num_targets_langs(self):
+        return len(self.target_langs)
+
+    @property
     def num_targets_not_found(self):
         return sum(value is None for value in self.results.values())
 
