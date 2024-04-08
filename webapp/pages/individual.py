@@ -1,6 +1,7 @@
 from datetime import datetime
 import io
 import json
+import random
 
 
 from dash import callback, Dash, dash_table, dcc, html, Input, Output, State
@@ -11,13 +12,13 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 
 
-from get_from_wikipedia import BACKLINKS_LIMIT, CONTRIBS_LIMIT
-from webapp.helpers import create_main_fig, get_color, get_lang_name, humantime_fmt, LANGS, map_score, sizeof_fmt
+from webapp.helpers import create_main_fig, get_color, get_lang_name, humantime_fmt, map_score, sizeof_fmt
+from wikiscrapper.helpers import GLOBAL_LIMIT, wiki_quote
 
 
 dash.register_page(__name__)
 
-layout = dbc.Container(
+layout = html.Div(
     [
         html.H2("", id="page_title"),
         # Dropdowns (person & lang)
@@ -71,7 +72,6 @@ layout = dbc.Container(
             ]
         ),
     ],
-    fluid="xl",
 )
 
 
@@ -82,7 +82,7 @@ layout = dbc.Container(
 )
 def load_data(data):
     if data is not None:
-        people = list(data.keys())
+        people = list(person for person, langs in data.items() if langs is not None)
         return people, people[0]
 
 
@@ -96,9 +96,10 @@ def load_data(data):
 def change_person(person, data):
     cur_data = data[person]
 
-    if "error" in cur_data:
+    if cur_data is None:
         return [], "", f"Error with {person}"
-    langs = list(cur_data["langs"])
+
+    langs = list(cur_data.keys())
 
     return langs, langs[0], person
 
@@ -113,19 +114,25 @@ def update_by_lang(selected_person, selected_langs, data):
     """
     Add a row to contain language details, such as contributions, for each language selected.
     """
-    if "error" in data[selected_person]:
-        return []
+    cur_data = data[selected_person] if selected_person else None
 
-    cur_data = data[selected_person]["langs"]
+    if cur_data is None:
+        return []
 
     if not isinstance(selected_langs, list):
         selected_langs = [selected_langs]
 
     by_langs = []
     for lang in selected_langs:
+        total_langs = len(cur_data[lang]["langlinks"])
+        select_langs = (
+            cur_data[lang]["langlinks"] if total_langs <= 3 else random.choices(cur_data[lang]["langlinks"], k=3)
+        )
+        select_langs = sorted([get_lang_name(lng, with_native=False) for lng in select_langs])
+
         # Infos card
-        name = cur_data[lang]["name"]
-        link = f"https://{lang}.wikipedia.org/wiki/{name.replace(' ', '_')}"
+        name = cur_data[lang]["title"]
+        link = f"https://{lang}.wikipedia.org/wiki/{wiki_quote(name)}"
         creation_user = cur_data[lang]["creation"]["user"]
         creation_user_link = f"https://{lang}.wikipedia.org/wiki/User:{creation_user}"
 
@@ -138,7 +145,7 @@ def update_by_lang(selected_person, selected_langs, data):
                 )
             ),
         ]
-        if "pageassessments" in cur_data[lang]:
+        if "pageassessments" in cur_data[lang] and len(cur_data[lang]["pageassessments"]) > 0:
             for category, obj in cur_data[lang]["pageassessments"].items():
                 class_importance.append(html.Dt(category))
                 cnt = []
@@ -188,7 +195,7 @@ def update_by_lang(selected_person, selected_langs, data):
         len_backlinks = len(set(cur_data[lang]["backlinks"]))
         card = dbc.Card(
             [
-                dbc.CardHeader(f"{lang} - {LANGS[lang]}"),
+                dbc.CardHeader(f"{lang} - {get_lang_name(lang)}"),
                 dbc.CardBody(
                     [
                         html.A(html.H4(name, className="card-title"), href=link, target="_blank"),
@@ -209,18 +216,20 @@ def update_by_lang(selected_person, selected_langs, data):
                                 ),
                                 html.Dt("Unique (named) contributors"),
                                 html.Dd(
-                                    len_contributors
-                                    if len_contributors < CONTRIBS_LIMIT
-                                    else f"More than {CONTRIBS_LIMIT}"
+                                    len_contributors if len_contributors < GLOBAL_LIMIT else f"More than {GLOBAL_LIMIT}"
                                 ),
                                 html.Dt("Unique (internal) backlinks"),
                                 html.Dd(
                                     html.A(
-                                        len_backlinks
-                                        if len_backlinks < BACKLINKS_LIMIT
-                                        else f"More than {BACKLINKS_LIMIT}",
+                                        len_backlinks if len_backlinks < GLOBAL_LIMIT else f"More than {GLOBAL_LIMIT}",
                                         href=f"https://{lang}.wikipedia.org/wiki/Special:WhatLinksHere/{name.replace(' ', '_')}",
                                         target="_blank",
+                                    )
+                                ),
+                                html.Dt(f"Other languages"),
+                                html.Dd(
+                                    html.P(
+                                        f"{', '.join(select_langs)}{', and {} more'.format(total_langs - 3) if total_langs > 3 else ''}"
                                     )
                                 ),
                             ]
@@ -234,7 +243,7 @@ def update_by_lang(selected_person, selected_langs, data):
         )
 
         # Contributions table
-        data = cur_data[lang]["contributions"]["items"]
+        data = cur_data[lang]["revisions"]
         data.reverse()
 
         try:
@@ -338,10 +347,10 @@ def update_graph(selected_person, selected_langs, data):
     """
     Update the graph with one or multiple languages.
     """
-    if "error" in data[selected_person]:
-        return go.Figure(), {"display": "none"}
+    cur_data = data[selected_person] if selected_person else None
 
-    cur_data = data[selected_person]["langs"]
+    if cur_data is None:
+        return go.Figure(), {"display": "none"}
 
     if not isinstance(selected_langs, list):
         selected_langs = [selected_langs]
@@ -367,7 +376,7 @@ def update_graph(selected_person, selected_langs, data):
     fig_main = go.Figure(data=figs_data)
 
     for lang in selected_langs:
-        contributions = cur_data[lang]["contributions"]["items"]
+        contributions = cur_data[lang]["revisions"]
         for contrib in contributions:
             fig_main.add_vline(x=contrib["timestamp"], line_dash="dash", line_color=get_color(lang))
 
