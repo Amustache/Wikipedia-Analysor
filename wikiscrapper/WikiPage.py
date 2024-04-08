@@ -238,20 +238,29 @@ class WikiPage:
     @property
     def pop_score(self):
         if not hasattr(self, "_pop_score") or self._pop_score is None:
-            self._pop_score = get_pop_score(self)
+            try:
+                self._pop_score = get_pop_score(self)
+            except:
+                self._pop_score = -1
 
         return self._pop_score
 
     @property
     def qual_score(self):
         if not hasattr(self, "_qual_score") or self._qual_score is None:
-            self._qual_score = get_qual_score(self)
+            try:
+                self._qual_score = get_qual_score(self)
+            except:
+                self._qual_score = -1
 
         return self._qual_score
 
     @property
     def pri_score(self):
         if not hasattr(self, "_pri_score") or self._pri_score is None:
-            self._pri_score = get_pri_score(self)
+            try:
+                self._pri_score = get_pri_score(self)
+            except:
+                self._pri_score = -1
 
         return self._pri_score
